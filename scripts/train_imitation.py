@@ -15,8 +15,8 @@ import pytorch_lightning as pl
 
 from babyaiutil.datasets.episodic import (
     FuncIterableDataset,
+    ParallelEnv,
     collect_experience_from_policy,
-    make_parallel_env,
 )
 from babyaiutil.datasets.trajectory import make_trajectory_dataset_from_trajectories
 from babyaiutil.models.imitation.baseline import ACModelImitationLearningHarness
@@ -86,7 +86,7 @@ def do_experiment(args):
     # To ensure that we quarantine the worker processes from this huge chunk of
     # memory, do lets make sure to fork them off *before* we start loading big files
     # into memory.
-    parallel_env = make_parallel_env("BabyAI-GoToLocal-v0")
+    parallel_env = ParallelEnv("BabyAI-GoToLocal-v0", args.n_eval_procs)
 
     with open(args.data, "rb") as f:
         print("Opened", f.name)
