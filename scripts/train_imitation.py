@@ -76,7 +76,8 @@ def do_experiment(args):
         return
 
     with open(args.data, "rb") as f:
-        (train_trajectories, valid_trajectories, words, word2idx) = pickle.load(f)
+        print("Opened", f.name)
+        (train_trajectories, valid_trajectories, words, word2idx) = np.load(f, allow_pickle=True)
 
     train_dataset = make_trajectory_dataset_from_trajectories(
         train_trajectories, limit=args.limit - args.vlimit
