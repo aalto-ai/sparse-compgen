@@ -136,13 +136,6 @@ class ParallelEnv(gym.Env):
             p.terminate()
 
 
-def make_parallel_env(env_name, n_envs):
-    envs = [gym.make(env_name) for i in range(n_envs)]
-    parallel_env = ParallelEnv(envs)
-
-    return parallel_env
-
-
 def collect_experience_from_policy(
     parallel_env, policy_model, word2idx, seeds, device=None
 ):
