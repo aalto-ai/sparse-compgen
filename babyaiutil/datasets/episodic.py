@@ -138,19 +138,23 @@ class ParallelEnv(gym.Env):
             p.terminate()
 
 
-def collect_experience_from_policy(
-    env_name, policy_model, word2idx, seeds, n_envs, device=None
-):
+def make_parallel_env(env_name, n_envs):
     envs = [gym.make(env_name) for i in range(n_envs)]
     parallel_env = ParallelEnv(envs)
 
+    return parallel_env
+
+
+def collect_experience_from_policy(
+    parallel_env, policy_model, word2idx, seeds, device=None
+):
     def generate_experiences():
         first_parameter = next(policy_model.parameters())
         device = getattr(first_parameter, "device", None) or "cpu"
 
         policy_model.eval()
 
-        for seeds_batch in grouper(seeds, n_envs):
+        for seeds_batch in grouper(seeds, parallel_env.n_envs):
             remaining_seeds_batch = [int(seed) for seed in seeds_batch if seed is not None]
             parallel_env.seed(remaining_seeds_batch)
             all_initial_obs = parallel_env.reset()[: len(remaining_seeds_batch)]
@@ -221,7 +225,7 @@ def collect_experience_from_policy(
                     remaining_seeds_batch, successes, np.stack(recorded_actions).T
                 ):
                     if not success:
-                        temp = gym.make(env_name)
+                        temp = gym.make(parallel_env.env_name)
                         temp.seed(seed)
                         obs = temp.reset()
                         print(obs["mission"], acts)
