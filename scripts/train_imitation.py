@@ -16,6 +16,7 @@ import pytorch_lightning as pl
 from babyaiutil.datasets.episodic import (
     FuncIterableDataset,
     collect_experience_from_policy,
+    make_parallel_env,
 )
 from babyaiutil.datasets.trajectory import make_trajectory_dataset_from_trajectories
 from babyaiutil.models.imitation.baseline import ACModelImitationLearningHarness
@@ -50,7 +51,7 @@ def parser():
     return parser
 
 
-def interactive_dataloader_from_seeds(env_name, model, word2idx, dataset, batch_size):
+def interactive_dataloader_from_seeds(parallel_env, model, word2idx, dataset, batch_size):
     seeds = [
         dataset.seeds[i] for i in itertools.chain.from_iterable(dataset.groups_indices)
     ]
@@ -75,6 +76,17 @@ def do_experiment(args):
         print(f"Skipping {exp_name} as it already exists")
         return
 
+    # We have to do some tricky things here since we're using multiprocessing
+    #
+    # In principle it shouldn't matter since Linux is copy-on-write. However,
+    # doing things with python objects can sometimes increase reference counts,
+    # which in turn copies the pages, which in turn increases memory usage.
+    #
+    # To ensure that we quarantine the worker processes from this huge chunk of
+    # memory, do lets make sure to fork them off *before* we start loading big files
+    # into memory.
+    parallel_env = make_parallel_env("BabyAI-GoToLocal-v0")
+
     with open(args.data, "rb") as f:
         print("Opened", f.name)
         (train_trajectories, valid_trajectories, words, word2idx) = np.load(f, allow_pickle=True)
@@ -94,10 +106,10 @@ def do_experiment(args):
 
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     val_id_dataloader_il = interactive_dataloader_from_seeds(
-        "BabyAI-GoToLocal-v0", model, word2idx, valid_dataset_id, 64
+        parallel_env, model, word2idx, valid_dataset_id, 64
     )
     val_ood_dataloader_il = interactive_dataloader_from_seeds(
-        "BabyAI-GoToLocal-v0", model, word2idx, valid_dataset_ood, 64
+        parallel_env, model, word2idx, valid_dataset_ood, 64
     )
 
     print(model)
