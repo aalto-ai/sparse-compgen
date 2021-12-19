@@ -48,6 +48,7 @@ def parser():
     parser.add_argument("--tlimit", default=40, type=int)
     parser.add_argument("--total", default=10000, type=int, help="Total number of instances per task")
     parser.add_argument("--iterations", default=200000, type=int)
+    parser.add_argument("--n-eval-procs", default=4, type=int, help="Number of processes to run evaluation with")
     return parser
 
 
