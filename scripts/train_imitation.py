@@ -13,9 +13,6 @@ import torch.nn.functional as F
 from torch.utils.data import ConcatDataset, Dataset, DataLoader
 import pytorch_lightning as pl
 
-import babyai
-import gym
-
 from babyaiutil.datasets.episodic import (
     FuncIterableDataset,
     collect_experience_from_policy,
