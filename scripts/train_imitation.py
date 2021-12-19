@@ -105,7 +105,7 @@ def do_experiment(args):
         callbacks=[pl.callbacks.LearningRateMonitor()],
         max_steps=args.iterations,
         # Every 500 steps, regardless of how large the training dataloader is
-        val_check_interval=500 / len(train_dataloader),
+        val_check_interval=min(1.0, 500 / len(train_dataloader)),
         gpus=1,
         default_root_dir=f"logs/{exp_name}",
         accumulate_grad_batches=1,
