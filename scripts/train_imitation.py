@@ -57,11 +57,11 @@ def interactive_dataloader_from_seeds(env_name, model, word2idx, dataset, batch_
     dataloader_il = DataLoader(
         FuncIterableDataset(
             collect_experience_from_policy(
-                "BabyAI-GoToLocal-v0", model, word2idx, seeds, 64
+                parallel_env, model, word2idx, seeds, batch_size
             ),
             len(seeds),
         ),
-        batch_size=64,
+        batch_size=batch_size,
     )
 
     return dataloader_il
