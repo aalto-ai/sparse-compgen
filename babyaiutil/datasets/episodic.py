@@ -95,8 +95,6 @@ class ParallelEnv(gym.Env):
         assert n_envs >= 1, "No environment given."
 
         self.env_name = env_name
-        self.observation_space = self.envs[0].observation_space
-        self.action_space = self.envs[0].action_space
 
         self.locals = []
         self.processes = []
