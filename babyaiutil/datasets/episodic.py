@@ -57,11 +57,13 @@ def act_in_envs(envs, actions, previous_dones):
     return np.stack(images), np.array(directions), np.array(rewards), np.array(dones)
 
 
-def worker(conn, env):
+def worker(conn, env_name):
     done = False
     obs = None
     reward = 0
     info = None
+
+    env = gym.make(env_name)
 
     while True:
         cmd, data = conn.recv()
@@ -89,19 +91,19 @@ def worker(conn, env):
 class ParallelEnv(gym.Env):
     """A concurrent execution of environments in multiple processes."""
 
-    def __init__(self, envs):
-        assert len(envs) >= 1, "No environment given."
+    def __init__(self, env_name, n_envs):
+        assert n_envs >= 1, "No environment given."
 
-        self.envs = envs
+        self.env_name = env_name
         self.observation_space = self.envs[0].observation_space
         self.action_space = self.envs[0].action_space
 
         self.locals = []
         self.processes = []
-        for env in self.envs:
+        for _ in range(n_envs):
             local, remote = Pipe()
             self.locals.append(local)
-            p = Process(target=worker, args=(remote, env))
+            p = Process(target=worker, args=(remote, self.env_name))
             p.daemon = True
             p.start()
             remote.close()
