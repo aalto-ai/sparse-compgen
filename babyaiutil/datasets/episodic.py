@@ -129,6 +129,10 @@ class ParallelEnv(gym.Env):
     def render(self):
         raise NotImplementedError
 
+    @property
+    def n_envs(self):
+        return len(self.locals)
+
     def __del__(self):
         for p in self.processes:
             p.terminate()
