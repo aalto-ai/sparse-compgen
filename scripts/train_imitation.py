@@ -45,6 +45,7 @@ def parser():
     parser.add_argument("--limit", default=None, type=int)
     parser.add_argument("--vlimit", default=20, type=int)
     parser.add_argument("--tlimit", default=40, type=int)
+    parser.add_argument("--total", default=10000, type=int, help="Total number of instances per task")
     parser.add_argument("--iterations", default=200000, type=int)
     return parser
 
@@ -81,7 +82,7 @@ def do_experiment(args):
         train_trajectories, limit=args.limit - args.vlimit
     )
     valid_dataset_id = make_trajectory_dataset_from_trajectories(
-        train_trajectories, limit=args.vlimit, offset=args.limit - args.vlimit
+        train_trajectories, limit=args.vlimit, offset=args.total - args.vlimit
     )
     valid_dataset_ood = make_trajectory_dataset_from_trajectories(
         valid_trajectories, limit=args.tlimit, offset=0
