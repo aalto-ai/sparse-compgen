@@ -70,6 +70,7 @@ class ImageDiscriminatorHarness(pl.LightningModule):
         output_tgt, masks_tgt, image_components_tgt = self.forward(
             (image_tgt[..., :2], mission, direction_tgt)
         )[:3]
+        label_long = label.long()
 
         loss = F.binary_cross_entropy_with_logits(output_tgt, label.float())
         loss_img = F.binary_cross_entropy(
@@ -96,10 +97,10 @@ class ImageDiscriminatorHarness(pl.LightningModule):
 
         self.log("timg", loss_img, prog_bar=True)
         self.log(
-            "tmap", tm.functional.average_precision(output_tgt, label), prog_bar=True
+            "tmap", tm.functional.average_precision(output_tgt, label_long), prog_bar=True
         )
-        self.log("tf1", tm.functional.f1(output_tgt, label), prog_bar=True)
-        self.log("tsf1", soft_f1(output_tgt.sigmoid(), label), prog_bar=True)
+        self.log("tf1", tm.functional.f1(output_tgt, label_long), prog_bar=True)
+        self.log("tsf1", soft_f1(output_tgt.sigmoid(), label_long), prog_bar=True)
         self.log(
             "pos_ll",
             compute_positive_ll(output_tgt[label.bool()]).mean(),
@@ -115,11 +116,13 @@ class ImageDiscriminatorHarness(pl.LightningModule):
 
         return loss + loss_img
 
-    def validation_step(self, x, idx):
+    def validation_step(self, x, idx, dataloader_idx):
         mission, image, direction, label, target = x
         output, _, __, predicted_states = self.forward(
             (image[..., :2], mission, direction)
         )[:4]
+        target_long = target.long()
+        label_long = label.long()
 
         loss = F.binary_cross_entropy_with_logits(output, label.float())
         bce_target = F.binary_cross_entropy_with_logits(
@@ -131,9 +134,9 @@ class ImageDiscriminatorHarness(pl.LightningModule):
 
             pdb.set_trace()
 
-        self.log("vmap", tm.functional.average_precision(output, label), prog_bar=True)
-        self.log("vf1", tm.functional.f1(output, label), prog_bar=True)
-        self.log("vsf1", soft_f1(output.sigmoid(), label), prog_bar=True)
+        self.log("vmap", tm.functional.average_precision(output, label_long), prog_bar=True)
+        self.log("vf1", tm.functional.f1(output, label_long), prog_bar=True)
+        self.log("vsf1", soft_f1(output.sigmoid(), label_long), prog_bar=True)
         self.log(
             "vpos_ll", compute_positive_ll(output[label.bool()]).mean(), prog_bar=True
         )
@@ -145,7 +148,7 @@ class ImageDiscriminatorHarness(pl.LightningModule):
         self.log(
             "vtf1",
             tm.functional.average_precision(
-                predicted_states.flatten(), target.float().flatten()
+                predicted_states.flatten(), target_long.flatten()
             ),
             prog_bar=True,
         )
