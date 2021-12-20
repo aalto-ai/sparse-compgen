@@ -183,7 +183,7 @@ class TransformerEncoderDecoderMasked(nn.Module):
         image_mask = self.to_mask(images, directions)
         projected_out_img = self.projection(out_img)
         projected_masked_filmed_cat_image_components = (
-            image_mask.permute(0, 2, 3, 1) * projected_out_img
+            image_mask.permute(0, 2, 3, 1).detach() * projected_out_img
         )
         pooled = (
             projected_masked_filmed_cat_image_components.squeeze(-1)
