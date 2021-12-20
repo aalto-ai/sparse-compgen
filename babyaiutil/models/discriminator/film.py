@@ -47,10 +47,9 @@ class FiLM(nn.Module):
         return F.relu(out)
 
 
-class FiLMConvEncoderMask(nn.Module):
+class FiLMConvEncoder(nn.Module):
     def __init__(self, attrib_offsets, emb_dim, n_words, imm_dim=128, layer_mults=None):
         super().__init__()
-
         layer_mults = layer_mults or [2, 1]
         len_offsets = len(attrib_offsets) - 1
 
@@ -58,11 +57,9 @@ class FiLMConvEncoderMask(nn.Module):
         self.attrib_embeddings = nn.Embedding(attrib_offsets[-1], emb_dim)
         self.word_embeddings = nn.Embedding(n_words, emb_dim)
         self.word_gru = nn.GRU(emb_dim, emb_dim, bidirectional=True)
-        self.to_mask = ImageComponentsToMask(emb_dim, attrib_offsets, layer_mults)
         self.film = FiLM(emb_dim * len_offsets, imm_dim, emb_dim * len_offsets, imm_dim)
-        self.projection = nn.Linear(imm_dim, 1)
 
-    def forward(self, images, missions, directions):
+    def forward(self, images, missions):
         mission_s = missions.transpose(0, 1)
         mission_words = self.word_embeddings(mission_s)
         mission_enc = (
@@ -93,12 +90,31 @@ class FiLMConvEncoderMask(nn.Module):
             .transpose(-2, -3)
         )
 
+        return filmed_cat_image_components, cat_image_components, image_components
+
+
+class FiLMConvEncoderMask(nn.Module):
+    def __init__(self, attrib_offsets, emb_dim, n_words, imm_dim=128, layer_mults=None):
+        super().__init__()
+        self.film_encoder = FiLMConvEncoder(
+            attrib_offsets, emb_dim, n_words, imm_dim=128, layer_mults=layer_mults
+        )
+        self.to_mask = ImageComponentsToMask(emb_dim, attrib_offsets, layer_mults)
+        self.projection = nn.Linear(imm_dim, 1)
+
+    def forward(self, images, missions, directions):
+        (
+            filmed_cat_image_components,
+            cat_image_components,
+            image_components,
+        ) = self.film_encoder(images, missions)
+
         # Note that image_mask re-embeds the image components
         # for its own use.
         image_mask = self.to_mask(images, directions)
         projected_image_components = self.projection(filmed_cat_image_components)
         projected_masked_filmed_cat_image_components = (
-            image_mask.permute(0, 2, 3, 1) * projected_image_components
+            image_mask.permute(0, 2, 3, 1).detach() * projected_image_components
         ).squeeze(-1)
         pooled = projected_masked_filmed_cat_image_components.mean(dim=-1).mean(dim=-1)
 
@@ -107,7 +123,7 @@ class FiLMConvEncoderMask(nn.Module):
 
             pdb.set_trace()
 
-        return pooled, image_mask, image_components, projected_image_components
+        return pooled, image_mask, image_components, projected_image_components.squeeze(-1)
 
 
 class FiLMDiscriminatorHarness(ImageDiscriminatorHarness):
