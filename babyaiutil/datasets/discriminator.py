@@ -88,20 +88,69 @@ def make_discriminator_dataset_from_trajectories(trajectories, limit=None):
     )
 
 
+def resample_array_by_groups_indices(groups_indices, array):
+    return np.stack(
+        [
+            array[groups_indices[i % len(groups_indices)][i // len(groups_indices)]]
+            for i in range(len(groups_indices) * len(groups_indices[0]))
+        ]
+    )
+
+
 class PathDiscriminatorDataset(Dataset):
     def __init__(
-        self, missions, images_paths, direction_paths, rewards, masks, targets
+        self,
+        groups_indices,
+        missions,
+        images_paths,
+        direction_paths,
+        rewards,
+        masks,
+        targets,
+        limit=None,
+        offset=None,
     ):
         super().__init__()
-        missions_path = missions[:, None].repeat(images_paths.shape[1], axis=1)
-        targets_path = np.stack(targets)[:, None].repeat(images_paths.shape[1], axis=1)
+        groups_indices = list(groups_indices.values())
 
-        bool_masks = masks.astype(np.bool)
-        masked_missions = missions_path[bool_masks]
-        masked_images = images_paths[bool_masks]
-        masked_directions = direction_paths[bool_masks]
-        masked_rewards = rewards[bool_masks]
-        masked_targets = targets_path[bool_masks]
+        # We assume that all the groups are balanced
+        assert all(
+            [len(groups_indices[0]) == len(indices) for indices in groups_indices]
+        )
+        assert len(missions) == len(groups_indices) * len(groups_indices[0])
+
+        offset = offset or 0
+
+        if limit:
+            assert offset + limit <= len(groups_indices[0])
+            groups_indices = [idx[offset:offset + limit] for idx in groups_indices]
+
+        resampled_missions = resample_array_by_groups_indices(groups_indices, missions)
+        resampled_images_paths = resample_array_by_groups_indices(
+            groups_indices, images_paths
+        )
+        resampled_direction_paths = resample_array_by_groups_indices(
+            groups_indices, direction_paths
+        )
+        resampled_rewards = resample_array_by_groups_indices(groups_indices, rewards)
+        resampled_targets = resample_array_by_groups_indices(
+            groups_indices, np.stack(targets)
+        )
+        resampled_masks = resample_array_by_groups_indices(groups_indices, masks)
+
+        resampled_missions_path = resampled_missions[:, None].repeat(
+            resampled_images_paths.shape[1], axis=1
+        )
+        resampled_targets_path = resampled_targets[:, None].repeat(
+            resampled_images_paths.shape[1], axis=1
+        )
+
+        resampled_bool_masks = resampled_masks.astype(np.bool)
+        masked_missions = resampled_missions_path[resampled_bool_masks]
+        masked_images = resampled_images_paths[resampled_bool_masks]
+        masked_directions = resampled_direction_paths[resampled_bool_masks]
+        masked_rewards = resampled_rewards[resampled_bool_masks]
+        masked_targets = resampled_targets_path[resampled_bool_masks]
 
         self.missions = masked_missions
         self.images = masked_images
@@ -122,12 +171,17 @@ class PathDiscriminatorDataset(Dataset):
         )
 
 
-def make_path_discriminator_dataset_from_trajectories(trajectories):
+def make_path_discriminator_dataset_from_trajectories(
+    trajectories, limit=None, offset=None
+):
     return PathDiscriminatorDataset(
+        mission_groups_indices(trajectories["missions"]),
         trajectories["missions"],
         trajectories["image_trajectories"],
         trajectories["direction_trajectories"],
         trajectories["rewards"],
         trajectories["trajectory_masks"],
         trajectories["targets"],
+        limit=limit,
+        offset=offset,
     )
