@@ -50,19 +50,15 @@ class IndependentAttentionModel(nn.Module):
         self.attrib_embeddings, self.word_embeddings = init_embeddings_ortho(
             (total_attribs, n_words), embed_dim
         )
-        self.to_mask = ImageComponentsToMask(embed_dim, attrib_offsets, [2, 1])
         self.att_encoding = AttentionWordsEncoding()
-        self.affine = Affine()
 
-    def forward(self, image, mission, direction):
+    def forward(self, image, mission):
         mission_words = self.word_embeddings(mission)
 
         image_components = [
             self.attrib_embeddings(image[..., i].long() + self.attrib_offsets[i])
             for i in range(image.shape[-1])
         ]
-
-        masks = self.to_mask(image, direction)
         attentions = torch.stack(
             [
                 self.att_encoding(
@@ -76,8 +72,26 @@ class IndependentAttentionModel(nn.Module):
 
         # Sum over => C x B x (H x W) x L => B x (H x W)
         cell_scores = (attentions.sum(dim=-1) + 10e-5).log().sum(dim=0).exp()
+
+        return (
+            cell_scores,
+            image_components,
+            attentions
+        )
+
+
+class IndependentAttentionModelMasked(nn.Module):
+    def __init__(self, attrib_offsets, embed_dim, n_words):
+        super().__init__()
+        self.encoder = IndependentAttentionModel(attrib_offsets, embed_dim, n_words)
+        self.to_mask = ImageComponentsToMask(embed_dim, attrib_offsets, [2, 1])
+        self.affine = Affine()
+
+    def forward(self, image, mission, direction):
+        cell_scores, image_components, attentions = self.encoder(image, mission)
+        masks = self.to_mask(image, direction)
         masked_cell_scores = (
-            masks.reshape(-1, masks.shape[-2] * masks.shape[-1]) * cell_scores
+            masks.reshape(-1, masks.shape[-2] * masks.shape[-1]).detach() * cell_scores
         )
         scores = masked_cell_scores.sum(dim=-1)
         affine_scores = self.affine(scores)
@@ -94,19 +108,19 @@ class IndependentAttentionModel(nn.Module):
 class IndependentAttentionDiscriminatorHarness(ImageDiscriminatorHarness):
     def __init__(self, attrib_offsets, emb_dim, n_words, lr=10e-4, l1_penalty=0):
         super().__init__(lr=lr, l1_penalty=l1_penalty)
-        self.encoder = IndependentAttentionModel(attrib_offsets, emb_dim, n_words)
+        self.model = IndependentAttentionModelMasked(attrib_offsets, emb_dim, n_words)
 
     def forward(self, x):
         image, mission, direction = x
-        return self.encoder(image, mission, direction)
+        return self.model(image, mission, direction)
 
     def training_step(self, x, idx):
         loss = super().training_step(x, idx)
 
         l1c = (
             (
-                F.normalize(self.encoder.attrib_embeddings.weight, dim=-1)
-                @ F.normalize(self.encoder.word_embeddings.weight, dim=-1).T
+                F.normalize(self.model.encoder.attrib_embeddings.weight, dim=-1)
+                @ F.normalize(self.model.encoder.word_embeddings.weight, dim=-1).T
             )
             .abs()
             .mean()
