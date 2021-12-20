@@ -195,7 +195,7 @@ class TransformerEncoderDecoderMasked(nn.Module):
             pooled,
             image_mask,
             image_components,
-            projected_out_img,
+            projected_out_img.squeeze(-1),
             decoder_att_weights,
             out_seq,
             self_att_masks,
