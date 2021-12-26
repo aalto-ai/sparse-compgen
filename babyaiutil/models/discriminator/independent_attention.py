@@ -84,30 +84,22 @@ class IndependentAttentionModelMasked(nn.Module):
     def __init__(self, attrib_offsets, embed_dim, n_words):
         super().__init__()
         self.encoder = IndependentAttentionModel(attrib_offsets, embed_dim, n_words)
-        self.to_mask = ImageComponentsToMask(embed_dim, attrib_offsets, [2, 1])
-        self.affine = Affine()
 
     def forward(self, image, mission, direction):
         cell_scores, image_components, attentions = self.encoder(image, mission)
-        masks = self.to_mask(image, direction)
-        masked_cell_scores = (
-            masks.reshape(-1, masks.shape[-2] * masks.shape[-1]).detach() * cell_scores
-        )
-        scores = masked_cell_scores.sum(dim=-1)
-        affine_scores = self.affine(scores)
 
         return (
-            affine_scores,
-            masks,
+            cell_scores.unsqueeze(-1),
             image_components,
-            self.affine(cell_scores.reshape(*image.shape[:-1])),
-            attentions,
+            None,
+            None,
+            attentions
         )
 
 
 class IndependentAttentionDiscriminatorHarness(ImageDiscriminatorHarness):
     def __init__(self, attrib_offsets, emb_dim, n_words, lr=10e-4, l1_penalty=0):
-        super().__init__(lr=lr, l1_penalty=l1_penalty)
+        super().__init__(attrib_offsets, emb_dim, 1, lr=lr, l1_penalty=l1_penalty)
         self.model = IndependentAttentionModelMasked(attrib_offsets, emb_dim, n_words)
 
     def forward(self, x):
