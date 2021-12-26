@@ -94,8 +94,8 @@ class IndependentAttentionDiscriminatorHarness(ImageDiscriminatorHarness):
 
         l1c = (
             (
-                F.normalize(self.model.encoder.attrib_embeddings.weight, dim=-1)
-                @ F.normalize(self.model.encoder.word_embeddings.weight, dim=-1).T
+                F.normalize(self.model.attrib_embeddings.weight, dim=-1)
+                @ F.normalize(self.model.word_embeddings.weight, dim=-1).T
             )
             .abs()
             .mean()
