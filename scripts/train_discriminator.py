@@ -68,7 +68,7 @@ def do_experiment(args):
     pl.seed_everything(args.seed)
     model = MODELS[args.model](
         [0, len(OBJECT_TO_IDX), len(OBJECT_TO_IDX) + len(COLOR_TO_IDX)],
-        32,
+        48,
         len(words),
         lr=5e-4,
     )
