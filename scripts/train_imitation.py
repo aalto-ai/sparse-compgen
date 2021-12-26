@@ -4,6 +4,8 @@ import os
 import operator
 import pickle
 
+import babyai
+
 import numpy as np
 import pandas as pd
 from torch.distributions import Categorical
