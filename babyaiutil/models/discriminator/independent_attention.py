@@ -73,11 +73,7 @@ class IndependentAttentionModel(nn.Module):
         # Sum over => C x B x (H x W) x L => B x (H x W)
         cell_scores = (attentions.sum(dim=-1) + 10e-5).log().sum(dim=0).exp()
 
-        return (
-            cell_scores,
-            image_components,
-            attentions
-        )
+        return (cell_scores, image_components, attentions)
 
 
 class IndependentAttentionModelMasked(nn.Module):
