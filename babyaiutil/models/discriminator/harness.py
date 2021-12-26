@@ -66,10 +66,10 @@ def soft_recall(predictions, targets):
 
 
 class ImageDiscriminatorHarness(pl.LightningModule):
-    def __init__(self, attrib_offsets, emb_dim, lr=10e-4, **kwargs):
+    def __init__(self, attrib_offsets, emb_dim, out_dim, lr=10e-4, **kwargs):
         super().__init__()
         self.to_mask = ImageComponentsToMask(emb_dim, attrib_offsets, [2, 1])
-        self.projection = nn.Linear(emb_dim * 2, 1)
+        self.projection = nn.Linear(out_dim, 1)
         self.save_hyperparameters()
 
     def configure_optimizers(self):
