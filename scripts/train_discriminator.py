@@ -9,7 +9,7 @@ from gym_minigrid.minigrid import OBJECT_TO_IDX, COLOR_TO_IDX
 
 from babyaiutil.datasets.discriminator import (
     make_discriminator_dataset_from_trajectories,
-    make_path_discriminator_dataset_from_trajectories,
+    make_initial_observation_discriminator_dataset_from_trajectories,
 )
 from babyaiutil.preprocess import mission_groups_indices
 from babyaiutil.models.discriminator.film import FiLMDiscriminatorHarness
@@ -55,8 +55,11 @@ def do_experiment(args):
     train_dataset = make_discriminator_dataset_from_trajectories(
         train_trajectories, limit=args.limit
     )
-    valid_dataset = make_path_discriminator_dataset_from_trajectories(
-        valid_trajectories
+    valid_dataset_id = make_initial_observation_discriminator_dataset_from_trajectories(
+        train_trajectories, limit=args.vlimit, offset=args.total - args.limit
+    )
+    valid_dataset_ood = make_initial_observation_discriminator_dataset_from_trajectories(
+        valid_trajectories, limit=args.tlimit, offset=0
     )
 
     pl.seed_everything(args.seed)
@@ -84,8 +87,11 @@ def do_experiment(args):
     pl.seed_everything(args.seed)
     trainer.fit(
         model,
-        DataLoader(train_dataset, batch_size=128),
-        DataLoader(valid_dataset, batch_size=1000),
+        DataLoader(train_dataset, batch_size=args.batch_size),
+        [
+            DataLoader(valid_dataset_id, batch_size=len(valid_dataset_id)),
+            DataLoader(valid_dataset_ood, batch_size=len(valid_dataset_ood)),
+        ]
     )
     trainer.save_checkpoint(f"{exp_name}.pt")
 
