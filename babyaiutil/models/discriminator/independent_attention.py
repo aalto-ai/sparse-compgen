@@ -80,31 +80,14 @@ class IndependentAttentionModel(nn.Module):
         )
 
 
-class IndependentAttentionModelMasked(nn.Module):
-    def __init__(self, attrib_offsets, embed_dim, n_words):
-        super().__init__()
-        self.encoder = IndependentAttentionModel(attrib_offsets, embed_dim, n_words)
-
-    def forward(self, image, mission, direction):
-        cell_scores, image_components, attentions = self.encoder(image, mission)
-
-        return (
-            cell_scores.unsqueeze(-1),
-            image_components,
-            None,
-            None,
-            attentions
-        )
-
-
 class IndependentAttentionDiscriminatorHarness(ImageDiscriminatorHarness):
     def __init__(self, attrib_offsets, emb_dim, n_words, lr=10e-4, l1_penalty=0):
         super().__init__(attrib_offsets, emb_dim, 1, lr=lr, l1_penalty=l1_penalty)
-        self.model = IndependentAttentionModelMasked(attrib_offsets, emb_dim, n_words)
+        self.model = IndependentAttentionModel(attrib_offsets, emb_dim, n_words)
 
     def forward(self, x):
-        image, mission, direction = x
-        return self.model(image, mission, direction)
+        image, mission = x
+        return self.model(image, mission)
 
     def training_step(self, x, idx):
         loss = super().training_step(x, idx)
