@@ -35,6 +35,33 @@ def match_components_separately(left_components, right_components):
     )
 
 
+def soft_precision(predictions, targets):
+    false_positive_mass = predictions * (1 - targets)
+    true_positive_mass = predictions * targets
+
+    precisions = true_positive_mass.view(true_positive_mass.shape[0], -1).sum(
+        dim=-1
+    ) / (
+        true_positive_mass.view(true_positive_mass.shape[0], -1).sum(dim=-1)
+        + false_positive_mass.view(false_positive_mass.shape[0], -1).sum(dim=-1)
+    )
+
+    return precisions
+
+
+def soft_recall(predictions, targets):
+    true_positives_mass = predictions * targets
+    true_positives_mass = true_positives_mass.view(
+        true_positives_mass.shape[0], -1
+    ).sum(dim=-1)
+    true_positives_plus_false_negatives_mass = targets.view(targets.shape[0], -1).sum(
+        dim=-1
+    )
+    recalls = true_positives_mass / true_positives_plus_false_negatives_mass
+
+    return recalls
+
+
 class ImageDiscriminatorHarness(pl.LightningModule):
     def __init__(self, lr=10e-4, **kwargs):
         super().__init__()
