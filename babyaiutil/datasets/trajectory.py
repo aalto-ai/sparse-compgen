@@ -55,7 +55,7 @@ class TrajectoryDataset(Dataset):
         if limit:
             assert offset + limit <= len(self.groups_indices[0])
             self.groups_indices = [
-                idx[offset:offset + limit] for idx in self.groups_indices
+                idx[offset : offset + limit] for idx in self.groups_indices
             ]
 
     def __len__(self):

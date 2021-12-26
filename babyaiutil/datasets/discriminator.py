@@ -123,7 +123,7 @@ class PathDiscriminatorDataset(Dataset):
 
         if limit:
             assert offset + limit <= len(groups_indices[0])
-            groups_indices = [idx[offset:offset + limit] for idx in groups_indices]
+            groups_indices = [idx[offset : offset + limit] for idx in groups_indices]
 
         resampled_missions = resample_array_by_groups_indices(groups_indices, missions)
         resampled_images_paths = resample_array_by_groups_indices(
