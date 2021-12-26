@@ -94,7 +94,7 @@ class FiLMConvEncoder(nn.Module):
 
 class FiLMDiscriminatorHarness(ImageDiscriminatorHarness):
     def __init__(self, attrib_offsets, emb_dim, n_words, lr=10e-4, layer_mults=None):
-        super().__init__(attrib_offsets, emb_dim, emb_dim * 2, lr=lr)
+        super().__init__(attrib_offsets, emb_dim, 128, lr=lr)
         self.film_encoder = FiLMConvEncoder(
             attrib_offsets, emb_dim, n_words, imm_dim=128, layer_mults=layer_mults
         )
