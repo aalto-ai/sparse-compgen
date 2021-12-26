@@ -70,7 +70,7 @@ def do_experiment(args):
         [0, len(OBJECT_TO_IDX), len(OBJECT_TO_IDX) + len(COLOR_TO_IDX)],
         48,
         len(words),
-        lr=5e-4,
+        lr=1e-5,
     )
     callbacks = (
         [
