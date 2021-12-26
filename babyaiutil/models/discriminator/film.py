@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..img_mask import ImageComponentsToMask
 from .harness import ImageDiscriminatorHarness
 
 
@@ -93,43 +92,12 @@ class FiLMConvEncoder(nn.Module):
         return filmed_cat_image_components, cat_image_components, image_components
 
 
-class FiLMConvEncoderMask(nn.Module):
-    def __init__(self, attrib_offsets, emb_dim, n_words, imm_dim=128, layer_mults=None):
-        super().__init__()
+class FiLMDiscriminatorHarness(ImageDiscriminatorHarness):
+    def __init__(self, attrib_offsets, emb_dim, n_words, lr=10e-4, layer_mults=None):
+        super().__init__(attrib_offsets, emb_dim, lr=lr)
         self.film_encoder = FiLMConvEncoder(
             attrib_offsets, emb_dim, n_words, imm_dim=128, layer_mults=layer_mults
         )
-        self.to_mask = ImageComponentsToMask(emb_dim, attrib_offsets, layer_mults)
-        self.projection = nn.Linear(imm_dim, 1)
-
-    def forward(self, images, missions, directions):
-        (
-            filmed_cat_image_components,
-            cat_image_components,
-            image_components,
-        ) = self.film_encoder(images, missions)
-
-        # Note that image_mask re-embeds the image components
-        # for its own use.
-        image_mask = self.to_mask(images, directions)
-        projected_image_components = self.projection(filmed_cat_image_components)
-        projected_masked_filmed_cat_image_components = (
-            image_mask.permute(0, 2, 3, 1).detach() * projected_image_components
-        ).squeeze(-1)
-        pooled = projected_masked_filmed_cat_image_components.mean(dim=-1).mean(dim=-1)
-
-        if os.environ.get("DEBUG", "0") == "1":
-            import pdb
-
-            pdb.set_trace()
-
-        return pooled, image_mask, image_components, projected_image_components.squeeze(-1)
-
-
-class FiLMDiscriminatorHarness(ImageDiscriminatorHarness):
-    def __init__(self, attrib_offsets, emb_dim, n_words, lr=10e-4):
-        super().__init__(lr=lr)
-        self.encoder = FiLMConvEncoderMask(attrib_offsets, emb_dim, n_words)
 
     def forward(self, x):
         image, mission, direction = x
