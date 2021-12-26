@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-from ..img_mask import ImageComponentsToMask
 from .harness import ImageDiscriminatorHarness
 
 
@@ -162,47 +161,6 @@ class TransformerEncoderDecoderModel(nn.Module):
             return (out_img, image_components, None, None, None, None)
 
 
-class TransformerEncoderDecoderMasked(nn.Module):
-    def __init__(self, attrib_offsets, emb_dim, n_words):
-        super().__init__()
-        self.model = TransformerEncoderDecoderModel(attrib_offsets, emb_dim, n_words)
-        self.projection = nn.Linear(emb_dim * 2, 1)
-        self.to_mask = ImageComponentsToMask(emb_dim, attrib_offsets, [2, 1])
-
-    def forward(self, images, missions, directions):
-        (
-            out_img,
-            image_components,
-            decoder_att_weights,
-            out_seq,
-            self_att_masks,
-            mha_masks,
-        ) = self.model(images, missions)
-
-        # image_mask re-embeds everything
-        image_mask = self.to_mask(images, directions)
-        projected_out_img = self.projection(out_img)
-        projected_masked_filmed_cat_image_components = (
-            image_mask.permute(0, 2, 3, 1).detach() * projected_out_img
-        )
-        pooled = (
-            projected_masked_filmed_cat_image_components.squeeze(-1)
-            .mean(dim=-1)
-            .mean(dim=-1)
-        )
-
-        return (
-            pooled,
-            image_mask,
-            image_components,
-            projected_out_img.squeeze(-1),
-            decoder_att_weights,
-            out_seq,
-            self_att_masks,
-            mha_masks,
-        )
-
-
 def linear_with_warmup_schedule(
     optimizer, num_warmup_steps, num_training_steps, min_lr_scale, last_epoch=-1
 ):
@@ -233,8 +191,8 @@ def linear_with_warmup_schedule(
 
 class TransformerDiscriminatorHarness(ImageDiscriminatorHarness):
     def __init__(self, attrib_offsets, emb_dim, n_words, lr=10e-4):
-        super().__init__(lr=lr)
-        self.encoder = TransformerEncoderDecoderMasked(attrib_offsets, emb_dim, n_words)
+        super().__init__(attrib_offsets, emb_dim, lr=lr)
+        self.encoder = TransformerEncoderDecoderModel(attrib_offsets, emb_dim, n_words)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
@@ -250,5 +208,5 @@ class TransformerDiscriminatorHarness(ImageDiscriminatorHarness):
         }
 
     def forward(self, x):
-        image, mission, direction = x
-        return self.encoder(image, mission, direction)
+        image, mission = x
+        return self.encoder(image, mission)
