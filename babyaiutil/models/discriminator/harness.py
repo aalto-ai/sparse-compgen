@@ -2,7 +2,6 @@ import os
 
 import torch
 import torch.nn.functional as F
-import torchmetrics as tm
 import pytorch_lightning as pl
 
 
@@ -12,21 +11,6 @@ def compute_positive_ll(scores):
 
 def compute_negative_ll(scores):
     return (1 - torch.sigmoid(scores) + 10e-7).log()
-
-
-def soft_prec(preds, labels):
-    return preds[labels == 1].sum() / preds.sum()
-
-
-def soft_recall(preds, labels):
-    return preds[labels == 1].sum() / labels.sum()
-
-
-def soft_f1(preds, labels):
-    prec = soft_prec(preds, labels)
-    recall = soft_recall(preds, labels)
-
-    return (2 * prec * recall) / (prec + recall)
 
 
 def apply_mask_to_image_components(image, mask):
