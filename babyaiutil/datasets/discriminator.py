@@ -185,3 +185,19 @@ def make_path_discriminator_dataset_from_trajectories(
         limit=limit,
         offset=offset,
     )
+
+
+def make_initial_observation_discriminator_dataset_from_trajectories(
+    trajectories, limit=None, offset=None
+):
+    return PathDiscriminatorDataset(
+        mission_groups_indices(trajectories["missions"]),
+        trajectories["missions"],
+        trajectories["image_trajectories"][:, :1],
+        trajectories["direction_trajectories"][:, :1],
+        trajectories["rewards"][:, :1],
+        trajectories["trajectory_masks"][:, :1],
+        trajectories["targets"],
+        limit=limit,
+        offset=offset,
+    )
