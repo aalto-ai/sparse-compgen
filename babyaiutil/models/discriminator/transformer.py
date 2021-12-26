@@ -191,7 +191,7 @@ def linear_with_warmup_schedule(
 
 class TransformerDiscriminatorHarness(ImageDiscriminatorHarness):
     def __init__(self, attrib_offsets, emb_dim, n_words, lr=10e-4):
-        super().__init__(attrib_offsets, emb_dim, lr=lr)
+        super().__init__(attrib_offsets, emb_dim, emb_dim * 2, lr=lr)
         self.encoder = TransformerEncoderDecoderModel(attrib_offsets, emb_dim, n_words)
 
     def configure_optimizers(self):
