@@ -1,8 +1,11 @@
 import os
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
+
+from ..img_mask import ImageComponentsToMask
 
 
 def compute_positive_ll(scores):
@@ -63,8 +66,10 @@ def soft_recall(predictions, targets):
 
 
 class ImageDiscriminatorHarness(pl.LightningModule):
-    def __init__(self, lr=10e-4, **kwargs):
+    def __init__(self, attrib_offsets, emb_dim, lr=10e-4, **kwargs):
         super().__init__()
+        self.to_mask = ImageComponentsToMask(emb_dim, attrib_offsets, [2, 1])
+        self.projection = nn.Linear(emb_dim * 2, 1)
         self.save_hyperparameters()
 
     def configure_optimizers(self):
@@ -75,15 +80,25 @@ class ImageDiscriminatorHarness(pl.LightningModule):
 
     def training_step(self, x, idx):
         mission, image_src, direction_src, image_tgt, direction_tgt, label = x
-        _, masks_src, image_components_src = self.forward(
-            (image_src[..., :2], mission, direction_src)
-        )[:3]
-        output_tgt, masks_tgt, image_components_tgt = self.forward(
-            (image_tgt[..., :2], mission, direction_tgt)
-        )[:3]
-        label_long = label.long()
+        _, image_components_src = self.forward((image_src[..., :2], mission))[:2]
+        output_tgt, image_components_tgt = self.forward((image_tgt[..., :2], mission))[
+            :2
+        ]
+        output_tgt = self.projection(output_tgt).squeeze(-1)
 
-        loss = F.binary_cross_entropy_with_logits(output_tgt, label.float())
+        masks_src = self.to_mask(image_src[..., :2], direction_src)
+        masks_tgt = self.to_mask(image_tgt[..., :2], direction_tgt)
+
+        masked_output_label = (
+            masks_tgt.detach().squeeze(1) * label.float()[:, None, None]
+        )
+        pos_weight = torch.tensor(
+            masked_output_label.view(-1).shape[0] / label.view(-1).shape[0]
+        )
+
+        loss = F.binary_cross_entropy_with_logits(
+            output_tgt, masked_output_label, pos_weight=pos_weight
+        )
         loss_img = F.binary_cross_entropy(
             match_components_separately(
                 mask_components(image_components_src, masks_src),
@@ -107,21 +122,6 @@ class ImageDiscriminatorHarness(pl.LightningModule):
             pdb.set_trace()
 
         self.log("timg", loss_img, prog_bar=True)
-        self.log(
-            "tmap", tm.functional.average_precision(output_tgt, label_long), prog_bar=True
-        )
-        self.log("tf1", tm.functional.f1(output_tgt, label_long), prog_bar=True)
-        self.log("tsf1", soft_f1(output_tgt.sigmoid(), label_long), prog_bar=True)
-        self.log(
-            "pos_ll",
-            compute_positive_ll(output_tgt[label.bool()]).mean(),
-            prog_bar=True,
-        )
-        self.log(
-            "neg_ll",
-            compute_negative_ll(output_tgt[~label.bool()]).mean(),
-            prog_bar=True,
-        )
         self.log("bce", loss, prog_bar=True)
         self.log("me", masks_entropy, prog_bar=True)
 
@@ -129,15 +129,15 @@ class ImageDiscriminatorHarness(pl.LightningModule):
 
     def validation_step(self, x, idx, dataloader_idx):
         mission, image, direction, label, target = x
-        output, _, __, predicted_states = self.forward(
-            (image[..., :2], mission, direction)
-        )[:4]
+        output, image_components = self.forward((image[..., :2], mission))[:2]
+        output = self.projection(output).squeeze(-1)
         target_long = target.long()
-        label_long = label.long()
+        pos_weight = torch.tensor(
+            target_long.view(-1).shape[0] / label.view(-1).shape[0]
+        )
 
-        loss = F.binary_cross_entropy_with_logits(output, label.float())
         bce_target = F.binary_cross_entropy_with_logits(
-            predicted_states, target.float()
+            output, target.float(), pos_weight=pos_weight
         )
 
         if os.environ.get("DEBUG", "0") == "1":
@@ -145,23 +145,10 @@ class ImageDiscriminatorHarness(pl.LightningModule):
 
             pdb.set_trace()
 
-        self.log("vmap", tm.functional.average_precision(output, label_long), prog_bar=True)
-        self.log("vf1", tm.functional.f1(output, label_long), prog_bar=True)
-        self.log("vsf1", soft_f1(output.sigmoid(), label_long), prog_bar=True)
-        self.log(
-            "vpos_ll", compute_positive_ll(output[label.bool()]).mean(), prog_bar=True
-        )
-        self.log(
-            "vneg_ll", compute_negative_ll(output[~label.bool()]).mean(), prog_bar=True
-        )
-        self.log("vbce", loss, prog_bar=True)
         self.log("vtarget", bce_target, prog_bar=True)
         self.log(
-            "vtf1",
-            tm.functional.average_precision(
-                predicted_states.flatten(), target_long.flatten()
-            ),
-            prog_bar=True,
+            "vsprec", soft_precision(output.sigmoid(), target.float()), prog_bar=True
         )
-
-        return loss
+        self.log(
+            "vsrecall", soft_recall(output.sigmoid(), target.float()), prog_bar=True
+        )
