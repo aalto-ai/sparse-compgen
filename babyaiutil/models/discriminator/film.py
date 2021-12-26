@@ -89,7 +89,7 @@ class FiLMConvEncoder(nn.Module):
             .transpose(-2, -3)
         )
 
-        return filmed_cat_image_components, cat_image_components, image_components
+        return filmed_cat_image_components, image_components
 
 
 class FiLMDiscriminatorHarness(ImageDiscriminatorHarness):
