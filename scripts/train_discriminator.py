@@ -101,7 +101,7 @@ def do_experiment(args):
 
 def main():
     p = parser()
-    args = parser.parse_args()
+    args = p.parse_args()
     return do_experiment(args)
 
 
