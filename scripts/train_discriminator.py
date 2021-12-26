@@ -38,7 +38,7 @@ def parser():
     parser.add_argument("--limit", default=None, type=int, help="Training set limit (per task)")
     parser.add_argument("--vlimit", default=None, type=int, help="Validation set limit (per task)")
     parser.add_argument("--tlimit", default=None, type=int, help="Test set limit (per task)")
-    parser.add_argument("--iterations", default=200000, type=int)
+    parser.add_argument("--iterations", default=50000, type=int)
     parser.add_argument("--total", default=10000, type=int, help="Total number of instances per task")
     parser.add_argument("--batch-size", default=512, type=int, help="Batch size for training")
     return parser
