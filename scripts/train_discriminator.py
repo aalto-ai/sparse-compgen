@@ -35,13 +35,17 @@ def parser():
     parser.add_argument(
         "--model", choices=["film", "transformer", "independent", "independent_noreg"]
     )
-    parser.add_argument("--limit", default=None, type=int)
+    parser.add_argument("--limit", default=None, type=int, help="Training set limit (per task)")
+    parser.add_argument("--vlimit", default=None, type=int, help="Validation set limit (per task)")
+    parser.add_argument("--tlimit", default=None, type=int, help="Test set limit (per task)")
     parser.add_argument("--iterations", default=200000, type=int)
+    parser.add_argument("--total", default=10000, type=int, help="Total number of instances per task")
+    parser.add_argument("--batch-size", default=512, type=int, help="Batch size for training")
     return parser
 
 
 def do_experiment(args):
-    exp_name = f"{args.exp_name}_s_{args.seed}_m_{args.model}_it_{args.iterations}_l_{args.limit or 10000}"
+    exp_name = f"{args.exp_name}_s_{args.seed}_m_{args.model}_it_{args.iterations}_b_{args.batch_size}_l_{args.limit or args.total}"
     print(exp_name)
 
     if os.path.exists(f"{exp_name}.pt"):
