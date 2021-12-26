@@ -11,7 +11,6 @@ from babyaiutil.datasets.discriminator import (
     make_discriminator_dataset_from_trajectories,
     make_initial_observation_discriminator_dataset_from_trajectories,
 )
-from babyaiutil.preprocess import mission_groups_indices
 from babyaiutil.models.discriminator.film import FiLMDiscriminatorHarness
 from babyaiutil.models.discriminator.transformer import TransformerDiscriminatorHarness
 from babyaiutil.models.discriminator.independent_attention import (
