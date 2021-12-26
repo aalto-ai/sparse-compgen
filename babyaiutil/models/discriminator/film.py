@@ -101,4 +101,4 @@ class FiLMDiscriminatorHarness(ImageDiscriminatorHarness):
 
     def forward(self, x):
         image, mission = x
-        return self.encoder(image, mission)
+        return self.film_encoder(image, mission)
