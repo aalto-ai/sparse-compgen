@@ -56,7 +56,7 @@ def do_experiment(args):
         (train_trajectories, valid_trajectories, words, word2idx) = pickle.load(f)
 
     train_dataset = make_discriminator_dataset_from_trajectories(
-        train_trajectories, limit=args.limit
+        train_trajectories, limit=min([args.limit, args.total - args.vlimit])
     )
     valid_dataset_id = make_initial_observation_discriminator_dataset_from_trajectories(
         train_trajectories, limit=args.vlimit, offset=args.total - args.limit
