@@ -45,7 +45,9 @@ def parser():
 
 
 def do_experiment(args):
-    exp_name = f"{args.exp_name}_s_{args.seed}_m_{args.model}_it_{args.iterations}_b_{args.batch_size}_l_{args.limit or args.total}"
+    effective_limit = min([args.limit or (args.total - args.vlimit), args.total - args.vlimit])
+
+    exp_name = f"{args.exp_name}_s_{args.seed}_m_{args.model}_it_{args.iterations}_b_{args.batch_size}_l_{effective_limit}"
     print(exp_name)
 
     if os.path.exists(f"{exp_name}.pt"):
@@ -56,7 +58,7 @@ def do_experiment(args):
         (train_trajectories, valid_trajectories, words, word2idx) = pickle.load(f)
 
     train_dataset = make_discriminator_dataset_from_trajectories(
-        train_trajectories, limit=min([args.limit, args.total - args.vlimit])
+        train_trajectories, limit=effective_limit
     )
     valid_dataset_id = make_initial_observation_discriminator_dataset_from_trajectories(
         train_trajectories, limit=args.vlimit, offset=args.total - args.limit
