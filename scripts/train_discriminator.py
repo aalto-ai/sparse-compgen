@@ -61,7 +61,7 @@ def do_experiment(args):
         train_trajectories, limit=effective_limit
     )
     valid_dataset_id = make_initial_observation_discriminator_dataset_from_trajectories(
-        train_trajectories, limit=args.vlimit, offset=args.total - args.limit
+        train_trajectories, limit=args.vlimit, offset=args.total - args.vlimit,
     )
     valid_dataset_ood = make_initial_observation_discriminator_dataset_from_trajectories(
         valid_trajectories, limit=args.tlimit, offset=0
