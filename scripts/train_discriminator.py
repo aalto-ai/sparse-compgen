@@ -52,7 +52,7 @@ def do_experiment(args):
     model_path = f"{model_dir}/{exp_name}.pt"
     print(model_path)
 
-    os.makedirs(f"models/{args.exp_name}", exist_ok=True)
+    os.makedirs(model_dir, exist_ok=True)
 
     if os.path.exists(f"{model_path}"):
         print(f"Skipping {model_path} as it already exists")
