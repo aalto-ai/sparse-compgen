@@ -49,7 +49,7 @@ def soft_precision(predictions, targets):
         + false_positive_mass.view(false_positive_mass.shape[0], -1).sum(dim=-1)
     )
 
-    return precisions
+    return precisions.mean()
 
 
 def soft_recall(predictions, targets):
@@ -62,7 +62,7 @@ def soft_recall(predictions, targets):
     )
     recalls = true_positives_mass / true_positives_plus_false_negatives_mass
 
-    return recalls
+    return recalls.mean()
 
 
 class ImageDiscriminatorHarness(pl.LightningModule):
