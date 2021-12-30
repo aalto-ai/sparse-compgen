@@ -73,11 +73,17 @@ def interactive_dataloader_from_seeds(parallel_env, model, word2idx, dataset, ba
 
 
 def do_experiment(args):
-    exp_name = f"{args.exp_name}_s_{args.seed}_m_{args.model}_it_{args.iterations}_l_{args.limit or 10000}"
-    print(exp_name)
+    effective_limit = min([args.limit or (args.total - args.vlimit), args.total - args.vlimit])
 
-    if os.path.exists(f"{exp_name}.pt"):
-        print(f"Skipping {exp_name} as it already exists")
+    exp_name = f"{args.exp_name}_s_{args.seed}_m_{args.model}_it_{args.iterations}_b_{args.batch_size}_l_{effective_limit}"
+    model_dir = f"models/{args.exp_name}/{args.model}"
+    model_path = f"{model_dir}/{exp_name}.pt"
+    print(model_path)
+
+    os.makedirs(model_dir, exist_ok=True)
+
+    if os.path.exists(f"{model_path}"):
+        print(f"Skipping {model_path} as it already exists")
         return
 
     # We have to do some tricky things here since we're using multiprocessing
@@ -96,7 +102,7 @@ def do_experiment(args):
         (train_trajectories, valid_trajectories, words, word2idx) = np.load(f, allow_pickle=True)
 
     train_dataset = make_trajectory_dataset_from_trajectories(
-        train_trajectories, limit=args.limit - args.vlimit
+        train_trajectories, limit=effective_limit
     )
     valid_dataset_id = make_trajectory_dataset_from_trajectories(
         train_trajectories, limit=args.vlimit, offset=args.total - args.vlimit
@@ -124,11 +130,12 @@ def do_experiment(args):
         # Every 500 steps, regardless of how large the training dataloader is
         val_check_interval=min(1.0, 500 / len(train_dataloader)),
         gpus=1,
-        default_root_dir=f"logs/{exp_name}",
+        default_root_dir=f"logs/{model_dir}/{exp_name}",
         accumulate_grad_batches=1,
     )
     trainer.fit(model, train_dataloader, [val_id_dataloader_il, val_ood_dataloader_il])
-    trainer.save_checkpoint(f"{exp_name}.pt")
+    print(f"Done, saving {model_path}")
+    trainer.save_checkpoint(f"{model_path}")
 
 
 def main():
