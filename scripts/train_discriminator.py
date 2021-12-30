@@ -90,7 +90,7 @@ def do_experiment(args):
         max_steps=args.iterations,
         val_check_interval=20,
         gpus=1,
-        default_root_dir=f"logs/{args.exp_name}/{exp_name}",
+        default_root_dir=f"logs/{model_dir}/{exp_name}",
         callbacks=callbacks,
     )
     pl.seed_everything(args.seed)
