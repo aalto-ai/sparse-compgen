@@ -99,7 +99,11 @@ class ImageDiscriminatorHarness(pl.LightningModule):
         loss = F.binary_cross_entropy_with_logits(
             output_tgt, masked_output_label, pos_weight=pos_weight
         )
-        loss_img = F.binary_cross_entropy(
+
+        # Using mse_loss here instead of BCE loss since doesn't penalize
+        # overconfidence on wrong predictions as much (which is important,
+        # since we will have some label noise)
+        loss_img = F.mse_loss(
             match_components_separately(
                 mask_components(image_components_src, masks_src),
                 mask_components(image_components_tgt, masks_tgt),
