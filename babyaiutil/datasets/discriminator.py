@@ -26,7 +26,8 @@ class DiscriminatorDataset(IterableDataset):
                 self.dataset[left_sample_idx_1],
                 self.dataset[left_sample_idx_2],
             )
-            right_sample = self.dataset[random.choice(right_indices)]
+            right_sample_idx = random.choice(right_indices)
+            right_sample = self.dataset[right_sample_idx]
 
             # For the first goal, take the rewarding state
             rewarding_image_left_1 = left_sample_1[0]
