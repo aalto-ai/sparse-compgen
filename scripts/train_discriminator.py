@@ -48,10 +48,14 @@ def do_experiment(args):
     effective_limit = min([args.limit or (args.total - args.vlimit), args.total - args.vlimit])
 
     exp_name = f"{args.exp_name}_s_{args.seed}_m_{args.model}_it_{args.iterations}_b_{args.batch_size}_l_{effective_limit}"
-    print(exp_name)
+    model_dir = f"models/{args.exp_name}/{args.model}"
+    model_path = f"{model_dir}/{exp_name}.pt"
+    print(model_path)
 
-    if os.path.exists(f"{exp_name}.pt"):
-        print(f"Skipping {exp_name} as it already exists")
+    os.makedirs(f"models/{args.exp_name}", exist_ok=True)
+
+    if os.path.exists(f"{model_path}"):
+        print(f"Skipping {model_path} as it already exists")
         return
 
     with open(args.data, "rb") as f:
@@ -98,7 +102,8 @@ def do_experiment(args):
             DataLoader(valid_dataset_ood, batch_size=len(valid_dataset_ood)),
         ]
     )
-    trainer.save_checkpoint(f"{exp_name}.pt")
+    print(f"Done, saving {model_path}")
+    trainer.save_checkpoint(f"{model_path}")
 
 
 def main():
