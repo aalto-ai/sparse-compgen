@@ -99,9 +99,13 @@ def do_experiment(args):
         else []
     )
 
+    train_dataloader = DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=True
+    )
     trainer = pl.Trainer(
         max_steps=args.iterations,
-        val_check_interval=20,
+        # Every 20 steps, regardless of how large the training dataloader is
+        val_check_interval=min(1.0, 20 / len(train_dataloader)),
         gpus=1,
         default_root_dir=f"logs/{model_dir}/{exp_name}",
         callbacks=callbacks,
@@ -109,7 +113,7 @@ def do_experiment(args):
     pl.seed_everything(args.seed)
     trainer.fit(
         model,
-        DataLoader(train_dataset, batch_size=args.batch_size),
+        train_dataloader,
         [
             DataLoader(valid_dataset_id, batch_size=len(valid_dataset_id)),
             DataLoader(valid_dataset_ood, batch_size=len(valid_dataset_ood)),
