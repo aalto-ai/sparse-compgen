@@ -51,6 +51,7 @@ def parser():
     parser.add_argument("--total", default=10000, type=int, help="Total number of instances per task")
     parser.add_argument("--iterations", default=200000, type=int)
     parser.add_argument("--n-eval-procs", default=4, type=int, help="Number of processes to run evaluation with")
+    parser.add_argument("--batch-size", default=32, type=int, help="Batch size for training")
     return parser
 
 
@@ -107,7 +108,7 @@ def do_experiment(args):
     pl.seed_everything(args.seed)
     model = MODELS[args.model](lr=1e-3)
 
-    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_id_dataloader_il = interactive_dataloader_from_seeds(
         parallel_env, model, word2idx, valid_dataset_id, 64
     )
