@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from scipy.stats import ortho_group
+
 from .harness import ImageDiscriminatorHarness
 
 
@@ -72,6 +74,15 @@ def do_decoder_forward_collect_masks(
     return x, self_att_masks, mha_masks
 
 
+def init_embeddings_ortho(embedding_sizes, embed_dim):
+    return [
+        nn.Embedding.from_pretrained(
+            torch.from_numpy(ortho_group.rvs(embed_dim)[:s]).float(), freeze=False
+        )
+        for s in embedding_sizes
+    ]
+
+
 class TransformerEncoderDecoderModel(nn.Module):
     def __init__(
         self,
@@ -85,9 +96,12 @@ class TransformerEncoderDecoderModel(nn.Module):
         self.attrib_offsets = attrib_offsets
 
         n_attrib = len(attrib_offsets) - 1
+        total_attribs = attrib_offsets[-1]
 
-        self.attrib_embeddings = nn.Embedding(attrib_offsets[-1], emb_dim)
-        self.word_embeddings = nn.Embedding(n_words, emb_dim * n_attrib)
+        self.attrib_embeddings, self.word_embeddings = init_embeddings_ortho(
+            (total_attribs, n_words), emb_dim
+        )
+        self.project_words_to_attrib_dim = nn.Linear(emb_dim, emb_dim * n_attrib)
         self.transformer = nn.Transformer(
             d_model=emb_dim * n_attrib,
             nhead=4,
@@ -98,7 +112,9 @@ class TransformerEncoderDecoderModel(nn.Module):
         )
 
     def forward(self, images, missions):
-        mission_words = self.word_embeddings(missions)
+        mission_words = self.project_words_to_attrib_dim(
+            self.word_embeddings(missions)
+        )
         image_components = [
             self.attrib_embeddings(images[..., i].long() + self.attrib_offsets[i])
             for i in range(images.shape[-1])
