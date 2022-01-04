@@ -187,7 +187,7 @@ class ACModel(nn.Module):
         x = self.image_conv(concat_observations_flat)
         for controller in self.controllers:
             out = controller(x, mission_enc_flat)
-            out += x
+            out = out + x
             x = out
         x = F.relu(self.film_pool(x))
         embedding = x.reshape(x.shape[0], -1)
