@@ -1,6 +1,7 @@
 import itertools
 from multiprocessing import Process, Pipe
 
+import gc
 import gym
 
 import numpy as np
@@ -80,6 +81,7 @@ def worker(conn, env_name):
             env.seed(data)
             np.random.seed(data)
         elif cmd == "reset":
+            gc.collect()
             obs = env.reset()
             obs = wrap_state(env, obs)
             done = False
