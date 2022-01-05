@@ -191,7 +191,7 @@ def collect_experience_from_policy(
                     # In parallel, get the logits from the model
                     all_act_logits, _ = policy_model(
                         (all_missions, all_images[:, None], all_directions[:, None])
-                    )
+                    )[:2]
                     all_act_logits = all_act_logits.reshape(all_act_logits.shape[0], -1)
                     all_actions = all_act_logits.max(dim=-1)[1].detach().cpu().numpy()
 
