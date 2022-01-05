@@ -76,7 +76,7 @@ class IndependentAttentionModel(nn.Module):
         return (
             cell_scores.reshape(*image.shape[:-1]).unsqueeze(-1),
             image_components,
-            attentions
+            attentions,
         )
 
 
