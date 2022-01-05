@@ -90,6 +90,16 @@ def worker(conn, env_name):
             raise NotImplementedError
 
 
+def create_proc_with_pipe(target_fn, args):
+    local, remote = Pipe()
+    p = Process(target=target_fn, args=(remote, *args))
+    p.daemon = True
+    p.start()
+    remote.close()
+
+    return p, local
+
+
 class ParallelEnv(gym.Env):
     """A concurrent execution of environments in multiple processes."""
 
@@ -101,12 +111,8 @@ class ParallelEnv(gym.Env):
         self.locals = []
         self.processes = []
         for _ in range(n_envs):
-            local, remote = Pipe()
+            p, local = create_proc_with_pipe(worker, args=(self.env_name, ))
             self.locals.append(local)
-            p = Process(target=worker, args=(remote, self.env_name))
-            p.daemon = True
-            p.start()
-            remote.close()
             self.processes.append(p)
 
     def reset(self):
