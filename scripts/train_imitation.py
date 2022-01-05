@@ -1,5 +1,6 @@
 import argparse
 import itertools
+import math
 import os
 import operator
 import pickle
@@ -52,6 +53,7 @@ def parser():
     parser.add_argument("--iterations", default=200000, type=int)
     parser.add_argument("--n-eval-procs", default=4, type=int, help="Number of processes to run evaluation with")
     parser.add_argument("--batch-size", default=32, type=int, help="Batch size for training")
+    parser.add_argument("--check-val-every", default=500, type=int, help="Check val every N steps")
     return parser
 
 
@@ -122,16 +124,25 @@ def do_experiment(args):
         parallel_env, model, word2idx, valid_dataset_ood, 64
     )
 
+    check_val_opts = {}
+    interval = args.check_val_every / len(train_dataloader)
+
+    # Every check_val_interval steps, regardless of how large the training dataloader is
+    if interval > 1.0:
+        check_val_opts["check_val_every_n_epoch"] = math.floor(interval)
+    else:
+        check_val_opts["val_check_interval"] = interval
+
     print(model)
+    print(check_val_opts)
     pl.seed_everything(args.seed)
     trainer = pl.Trainer(
         callbacks=[pl.callbacks.LearningRateMonitor()],
         max_steps=args.iterations,
-        # Every 500 steps, regardless of how large the training dataloader is
-        val_check_interval=min(1.0, 500 / len(train_dataloader)),
         gpus=1,
         default_root_dir=f"logs/{model_dir}/{exp_name}",
         accumulate_grad_batches=1,
+        **check_val_opts
     )
     trainer.fit(model, train_dataloader, [val_id_dataloader_il, val_ood_dataloader_il])
     print(f"Done, saving {model_path}")
