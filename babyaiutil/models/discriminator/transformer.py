@@ -112,9 +112,7 @@ class TransformerEncoderDecoderModel(nn.Module):
         )
 
     def forward(self, images, missions):
-        mission_words = self.project_words_to_attrib_dim(
-            self.word_embeddings(missions)
-        )
+        mission_words = self.project_words_to_attrib_dim(self.word_embeddings(missions))
         image_components = [
             self.attrib_embeddings(images[..., i].long() + self.attrib_offsets[i])
             for i in range(images.shape[-1])
