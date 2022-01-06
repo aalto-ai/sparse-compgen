@@ -97,9 +97,7 @@ def do_experiment(args):
     )
 
     checkpoint_cb = ModelCheckpoint(
-        monitor="vsucc/dataloader_idx_0",
-        auto_insert_metric_name=False,
-        save_top_k=5
+        monitor="vsucc/dataloader_idx_0", auto_insert_metric_name=False, save_top_k=5
     )
     callbacks = (
         [
@@ -107,9 +105,7 @@ def do_experiment(args):
         ]
         if args.model == "independent"
         else []
-    ) + [
-        checkpoint_cb
-    ]
+    ) + [checkpoint_cb]
 
     trainer = pl.Trainer(
         max_steps=args.iterations,
