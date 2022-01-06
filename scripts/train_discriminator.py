@@ -121,7 +121,7 @@ def do_experiment(args):
         [
             DataLoader(valid_dataset_id, batch_size=len(valid_dataset_id)),
             DataLoader(valid_dataset_ood, batch_size=len(valid_dataset_ood)),
-        ]
+        ],
     )
     print(f"Done, saving {model_path}")
     trainer.save_checkpoint(f"{model_path}")
