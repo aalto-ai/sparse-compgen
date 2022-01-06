@@ -4,6 +4,7 @@ import pickle
 
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 from gym_minigrid.minigrid import OBJECT_TO_IDX, COLOR_TO_IDX
 
@@ -35,12 +36,22 @@ def parser():
     parser.add_argument(
         "--model", choices=["film", "transformer", "independent", "independent_noreg"]
     )
-    parser.add_argument("--limit", default=None, type=int, help="Training set limit (per task)")
-    parser.add_argument("--vlimit", default=None, type=int, help="Validation set limit (per task)")
-    parser.add_argument("--tlimit", default=None, type=int, help="Test set limit (per task)")
+    parser.add_argument(
+        "--limit", default=None, type=int, help="Training set limit (per task)"
+    )
+    parser.add_argument(
+        "--vlimit", default=None, type=int, help="Validation set limit (per task)"
+    )
+    parser.add_argument(
+        "--tlimit", default=None, type=int, help="Test set limit (per task)"
+    )
     parser.add_argument("--iterations", default=50000, type=int)
-    parser.add_argument("--total", default=10000, type=int, help="Total number of instances per task")
-    parser.add_argument("--batch-size", default=512, type=int, help="Batch size for training")
+    parser.add_argument(
+        "--total", default=10000, type=int, help="Total number of instances per task"
+    )
+    parser.add_argument(
+        "--batch-size", default=512, type=int, help="Batch size for training"
+    )
     return parser
 
 
@@ -78,13 +89,21 @@ def do_experiment(args):
         len(words),
         lr=1e-4,
     )
+
+    checkpoint_cb = ModelCheckpoint(
+        monitor="vsucc/dataloader_idx_0",
+        auto_insert_metric_name=False,
+        save_top_k=5
+    )
     callbacks = (
         [
             ScheduleHparamCallback("l1_penalty", 0, 10e-1, 1000, 5000),
         ]
         if args.model == "independent"
         else []
-    )
+    ) + [
+        checkpoint_cb
+    ]
 
     trainer = pl.Trainer(
         max_steps=args.iterations,
@@ -104,6 +123,8 @@ def do_experiment(args):
     )
     print(f"Done, saving {model_path}")
     trainer.save_checkpoint(f"{model_path}")
+    print("Saving checkpoints info")
+    checkpoint_cb.to_yaml()
 
 
 def main():
