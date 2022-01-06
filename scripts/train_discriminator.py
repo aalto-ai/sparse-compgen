@@ -56,7 +56,9 @@ def parser():
 
 
 def do_experiment(args):
-    effective_limit = min([args.limit or (args.total - args.vlimit), args.total - args.vlimit])
+    effective_limit = min(
+        [args.limit or (args.total - args.vlimit), args.total - args.vlimit]
+    )
 
     exp_name = f"{args.exp_name}_s_{args.seed}_m_{args.model}_it_{args.iterations}_b_{args.batch_size}_l_{effective_limit}"
     model_dir = f"models/{args.exp_name}/{args.model}"
