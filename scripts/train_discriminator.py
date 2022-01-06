@@ -78,10 +78,14 @@ def do_experiment(args):
         train_trajectories, limit=effective_limit
     )
     valid_dataset_id = make_initial_observation_discriminator_dataset_from_trajectories(
-        train_trajectories, limit=args.vlimit, offset=args.total - args.vlimit,
+        train_trajectories,
+        limit=args.vlimit,
+        offset=args.total - args.vlimit,
     )
-    valid_dataset_ood = make_initial_observation_discriminator_dataset_from_trajectories(
-        valid_trajectories, limit=args.tlimit, offset=0
+    valid_dataset_ood = (
+        make_initial_observation_discriminator_dataset_from_trajectories(
+            valid_trajectories, limit=args.tlimit, offset=0
+        )
     )
 
     pl.seed_everything(args.seed)
