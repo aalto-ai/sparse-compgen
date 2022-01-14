@@ -20,6 +20,11 @@ class DiscriminatorDataset(IterableDataset):
             # Sample two distinct goals from the groups
             left_indices, right_indices = random.sample(self.groups_indices, 2)
 
+            # There is a 1-in-(n_goals - 1 + 1) chance that we sample
+            # a null-goal, in which case the negative example
+            # will be a non-goal state of the goal trajectory
+            sampling_null_goal = random.random() < (1 / len(self.groups_indices))
+
             # Sample a datapoint from each
             left_sample_idx_1, left_sample_idx_2 = random.sample(left_indices, 2)
             left_sample_1, left_sample_2 = (
@@ -37,8 +42,15 @@ class DiscriminatorDataset(IterableDataset):
             target_mission = left_sample_1[4]
 
             # For the second goal, take the rewarding state
-            right_sample_image = right_sample[0]
-            right_sample_direction = right_sample[-2]
+            # or if sampling an null-goal, a random
+            # sample of the masked_trajectory (minus the goal state)
+            if sampling_null_goal:
+                null_goal_path_idx = random.choice(list(range(len(left_sample_1[2][left_sample_1[2].astype(np.bool)]) - 1)))
+                right_sample_image = left_sample_1[1][null_goal_path_idx]
+                right_sample_direction = left_sample_1[3][null_goal_path_idx]
+            else:
+                right_sample_image = right_sample[0]
+                right_sample_direction = right_sample[-2]
 
             # First yield the "true" example
             #
