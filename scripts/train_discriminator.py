@@ -52,6 +52,9 @@ def parser():
     parser.add_argument(
         "--batch-size", default=512, type=int, help="Batch size for training"
     )
+    parser.add_argument(
+        "--check-val-every", default=20, type=int, help="Check val every N steps"
+    )
     return parser
 
 
@@ -109,10 +112,10 @@ def do_experiment(args):
 
     trainer = pl.Trainer(
         max_steps=args.iterations,
-        val_check_interval=20,
         gpus=1,
         default_root_dir=f"logs/{model_dir}/{exp_name}",
         callbacks=callbacks,
+        val_check_interval=args.check_val_every,
     )
     pl.seed_everything(args.seed)
     trainer.fit(
