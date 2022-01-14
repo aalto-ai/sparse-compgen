@@ -101,7 +101,10 @@ def do_experiment(args):
     )
 
     checkpoint_cb = ModelCheckpoint(
-        monitor="vsucc/dataloader_idx_0", auto_insert_metric_name=False, save_top_k=5
+        monitor="vsf1/dataloader_idx_0",
+        auto_insert_metric_name=False,
+        save_top_k=5,
+        mode="max",
     )
     callbacks = (
         [
