@@ -111,7 +111,7 @@ class ParallelEnv(gym.Env):
         self.locals = []
         self.processes = []
         for _ in range(n_envs):
-            p, local = create_proc_with_pipe(worker, args=(self.env_name, ))
+            p, local = create_proc_with_pipe(worker, args=(self.env_name,))
             self.locals.append(local)
             self.processes.append(p)
 
