@@ -49,15 +49,28 @@ def parser():
     parser.add_argument("--limit", default=None, type=int)
     parser.add_argument("--vlimit", default=20, type=int)
     parser.add_argument("--tlimit", default=40, type=int)
-    parser.add_argument("--total", default=10000, type=int, help="Total number of instances per task")
+    parser.add_argument(
+        "--total", default=10000, type=int, help="Total number of instances per task"
+    )
     parser.add_argument("--iterations", default=200000, type=int)
-    parser.add_argument("--n-eval-procs", default=4, type=int, help="Number of processes to run evaluation with")
-    parser.add_argument("--batch-size", default=32, type=int, help="Batch size for training")
-    parser.add_argument("--check-val-every", default=500, type=int, help="Check val every N steps")
+    parser.add_argument(
+        "--n-eval-procs",
+        default=4,
+        type=int,
+        help="Number of processes to run evaluation with",
+    )
+    parser.add_argument(
+        "--batch-size", default=32, type=int, help="Batch size for training"
+    )
+    parser.add_argument(
+        "--check-val-every", default=500, type=int, help="Check val every N steps"
+    )
     return parser
 
 
-def interactive_dataloader_from_seeds(parallel_env, model, word2idx, dataset, batch_size):
+def interactive_dataloader_from_seeds(
+    parallel_env, model, word2idx, dataset, batch_size
+):
     seeds = [
         dataset.seeds[i] for i in itertools.chain.from_iterable(dataset.groups_indices)
     ]
@@ -75,7 +88,9 @@ def interactive_dataloader_from_seeds(parallel_env, model, word2idx, dataset, ba
 
 
 def do_experiment(args):
-    effective_limit = min([args.limit or (args.total - args.vlimit), args.total - args.vlimit])
+    effective_limit = min(
+        [args.limit or (args.total - args.vlimit), args.total - args.vlimit]
+    )
 
     exp_name = f"{args.exp_name}_s_{args.seed}_m_{args.model}_it_{args.iterations}_b_{args.batch_size}_l_{effective_limit}"
     model_dir = f"models/{args.exp_name}/{args.model}"
@@ -101,7 +116,9 @@ def do_experiment(args):
 
     with open(args.data, "rb") as f:
         print("Opened", f.name)
-        (train_trajectories, valid_trajectories, words, word2idx) = np.load(f, allow_pickle=True)
+        (train_trajectories, valid_trajectories, words, word2idx) = np.load(
+            f, allow_pickle=True
+        )
 
     train_dataset = make_trajectory_dataset_from_trajectories(
         train_trajectories, limit=effective_limit
@@ -116,7 +133,9 @@ def do_experiment(args):
     pl.seed_everything(args.seed)
     model = MODELS[args.model](lr=1e-3)
 
-    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    train_dataloader = DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=True
+    )
     val_id_dataloader_il = interactive_dataloader_from_seeds(
         parallel_env, model, word2idx, valid_dataset_id, 64
     )
@@ -142,7 +161,7 @@ def do_experiment(args):
         gpus=1,
         default_root_dir=f"logs/{model_dir}/{exp_name}",
         accumulate_grad_batches=1,
-        **check_val_opts
+        **check_val_opts,
     )
     trainer.fit(model, train_dataloader, [val_id_dataloader_il, val_ood_dataloader_il])
     print(f"Done, saving {model_path}")
