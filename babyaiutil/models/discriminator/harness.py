@@ -149,10 +149,11 @@ class ImageDiscriminatorHarness(pl.LightningModule):
 
             pdb.set_trace()
 
+        precision = soft_precision(output.sigmoid(), target.float())
+        recall = soft_recall(output.sigmoid(), target.float())
+        f1 = 2 * (precision * recall) / (precision + recall)
+
         self.log("vtarget", bce_target, prog_bar=True)
-        self.log(
-            "vsprec", soft_precision(output.sigmoid(), target.float()), prog_bar=True
-        )
-        self.log(
-            "vsrecall", soft_recall(output.sigmoid(), target.float()), prog_bar=True
-        )
+        self.log("vsprec", precision, prog_bar=True)
+        self.log("vsrecall", recall, prog_bar=True)
+        self.log("vsf1", f1, prog_bar=True)
