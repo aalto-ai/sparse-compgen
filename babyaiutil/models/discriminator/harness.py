@@ -17,7 +17,11 @@ def compute_negative_ll(scores):
 
 
 def apply_mask_to_image_components(image, mask):
-    return (image.detach().transpose(-1, -2).transpose(-2, -3) * mask).sum(dim=-1).sum(dim=-1)
+    return (
+        (image.detach().transpose(-1, -2).transpose(-2, -3) * mask)
+        .sum(dim=-1)
+        .sum(dim=-1)
+    )
 
 
 def mask_components(image_components, mask):
