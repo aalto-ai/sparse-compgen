@@ -83,7 +83,7 @@ class ConvAttention(nn.Module):
         self.sm = SpatialSoftmax()
         self.project = nn.Linear(self.query[-1].net[-1].res[0].out_channels, 1)
 
-    def forward(self, query, temp=1.0):
+    def forward(self, query):
 
         # B x C x H x W
         conv_query = self.query(query)
@@ -91,7 +91,7 @@ class ConvAttention(nn.Module):
         att_weights = self.project(
             conv_query.transpose(-1, -3).transpose(-2, -3)
         ).squeeze(-1)
-        att = self.sm(att_weights[..., None, :, :] / temp)
+        att = self.sm(att_weights[..., None, :, :])
 
         return att
 
