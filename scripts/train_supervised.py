@@ -50,7 +50,7 @@ def parser():
         "--total", default=10000, type=int, help="Total number of instances per task"
     )
     parser.add_argument(
-        "--batch-size", default=512, type=int, help="Batch size for training"
+        "--batch-size", default=1024, type=int, help="Batch size for training"
     )
     return parser
 
