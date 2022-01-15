@@ -45,7 +45,13 @@ class DiscriminatorDataset(IterableDataset):
             # or if sampling an null-goal, a random
             # sample of the masked_trajectory (minus the goal state)
             if sampling_null_goal:
-                null_goal_path_idx = random.choice(list(range(len(left_sample_1[2][left_sample_1[2].astype(np.bool)]) - 1)))
+                null_goal_path_idx = random.choice(
+                    list(
+                        range(
+                            len(left_sample_1[2][left_sample_1[2].astype(np.bool)]) - 1
+                        )
+                    )
+                )
                 right_sample_image = left_sample_1[1][null_goal_path_idx]
                 right_sample_direction = left_sample_1[3][null_goal_path_idx]
             else:
