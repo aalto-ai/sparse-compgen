@@ -94,7 +94,7 @@ class ImageDiscriminatorHarness(pl.LightningModule):
         masks_tgt = self.to_mask(image_tgt[..., :2], direction_tgt)
 
         masked_output_label = (
-            masks_tgt.detach().squeeze(1) * label.float()[:, None, None]
+            masks_tgt.detach().squeeze(1) * label.to(masks_tgt.dtype)[:, None, None]
         )
         pos_weight = torch.tensor(
             masked_output_label.view(-1).shape[0] / label.view(-1).shape[0]
@@ -107,12 +107,13 @@ class ImageDiscriminatorHarness(pl.LightningModule):
         # Using mse_loss here instead of BCE loss since doesn't penalize
         # overconfidence on wrong predictions as much (which is important,
         # since we will have some label noise)
+        components_match = match_components_separately(
+            mask_components(image_components_src.to(masks_src.dtype), masks_src),
+            mask_components(image_components_tgt.to(masks_tgt.dtype), masks_tgt),
+        )
         loss_img = F.mse_loss(
-            match_components_separately(
-                mask_components(image_components_src, masks_src),
-                mask_components(image_components_tgt, masks_tgt),
-            ),
-            label.float(),
+            components_match,
+            label.to(components_match.dtype),
         )
 
         masks = torch.cat([masks_src, masks_tgt], dim=0)
