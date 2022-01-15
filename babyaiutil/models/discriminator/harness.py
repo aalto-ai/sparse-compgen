@@ -25,18 +25,18 @@ def apply_mask_to_image_components(image, mask):
 
 
 def mask_components(image_components, mask):
-    return [apply_mask_to_image_components(image, mask) for image in image_components]
+    # Add component dimension to mask, since image_components has
+    # a component dimension
+    return apply_mask_to_image_components(image_components, mask[..., None, :, :, :])
 
 
 def match_components_separately(left_components, right_components):
     return torch.clamp(
-        (
-            F.normalize(torch.stack(left_components, dim=0), dim=-1)
-            * F.normalize(torch.stack(right_components, dim=0), dim=-1)
-        )
-        .sum(dim=-1)
-        .relu()
-        .prod(dim=0),
+        (F.normalize(left_components, dim=-1) * F.normalize(right_components, dim=-1))
+        # B x C x E => B x C
+        .sum(dim=-1).relu()
+        # B x C => B
+        .prod(dim=-1),
         0,
         1,
     )
