@@ -52,7 +52,9 @@ class FiLMConvEncoder(nn.Module):
         layer_mults = layer_mults or [2, 1]
         len_offsets = len(attrib_offsets) - 1
 
-        self.attrib_offsets = attrib_offsets
+        self.register_buffer(
+            "attrib_offsets", torch.tensor(attrib_offsets, dtype=torch.long)
+        )
         self.attrib_embeddings = nn.Embedding(attrib_offsets[-1], emb_dim)
         self.word_embeddings = nn.Embedding(n_words, emb_dim)
         self.word_gru = nn.GRU(emb_dim, emb_dim, bidirectional=True)
@@ -75,11 +77,13 @@ class FiLMConvEncoder(nn.Module):
             .reshape(missions.shape[0], -1)
         )
 
-        image_components = [
-            self.attrib_embeddings(images[..., i].long() + self.attrib_offsets[i])
-            for i in range(images.shape[-1])
-        ]
-        cat_image_components = torch.cat(image_components, dim=-1)
+        sep_image_components = self.attrib_embeddings(
+            images.long() + self.attrib_offsets[: images.shape[-1]]
+        )
+        sep_image_components_t = sep_image_components.transpose(-2, -3).transpose(
+            -3, -4
+        )
+        cat_image_components = sep_image_components.flatten(-2)
 
         filmed_cat_image_components = (
             self.film(
@@ -89,7 +93,7 @@ class FiLMConvEncoder(nn.Module):
             .transpose(-2, -3)
         )
 
-        return filmed_cat_image_components, image_components
+        return filmed_cat_image_components, sep_image_components_t
 
 
 class FiLMDiscriminatorHarness(ImageDiscriminatorHarness):
