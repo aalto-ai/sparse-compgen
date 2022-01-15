@@ -102,22 +102,30 @@ class ImageComponentsToMask(nn.Module):
         total_attribs = attrib_offsets[-1]
 
         self.conv_att = ConvAttention(embed_dim * 3, layer_mults)
-        self.attrib_offsets = attrib_offsets
+        self.register_buffer(
+            "attrib_offsets", torch.tensor(attrib_offsets, dtype=torch.long)
+        )
         self.attrib_embeddings = nn.Embedding(total_attribs, embed_dim)
-        self.dir_emb = nn.Embedding(4, embed_dim)
 
-    def forward(self, image, direction, temp=1.0):
-        image_components = [
-            self.attrib_embeddings(image[..., i].long() + self.attrib_offsets[i])
-            for i in range(image.shape[-1])
-        ]
-        embedded_direction = self.dir_emb(direction)
-        cat_image_components = torch.cat(image_components, dim=-1)
+        # We embed the directiosn in the same dimensionality as
+        # the number of channels in the image, then slice the tensor
+        # later such that we can broadcast and concatenate in a way
+        # that is JIT-friendly
+        self.dir_emb = nn.Embedding(4, embed_dim * len(attrib_offsets[:-1]))
+        self.embed_dim = embed_dim
+
+    def forward(self, image, direction):
+        cat_image_components = self.attrib_embeddings(
+            image + self.attrib_offsets[: image.shape[-1]]
+        ).flatten(-2, -1)
+        embedded_direction = self.dir_emb(direction)[..., None, None, :]
+        _, broadcasted_direction = torch.broadcast_tensors(
+            cat_image_components, embedded_direction
+        )
+
         in_vectors = torch.cat(
             [
-                embedded_direction[..., None, None, :].expand(
-                    *cat_image_components.shape[:-1], embedded_direction.shape[-1]
-                ),
+                broadcasted_direction[..., : self.embed_dim],
                 cat_image_components,
             ],
             dim=-1,
