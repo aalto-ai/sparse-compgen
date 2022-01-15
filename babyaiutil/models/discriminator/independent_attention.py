@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -85,7 +87,7 @@ class IndependentAttentionDiscriminatorHarness(ImageDiscriminatorHarness):
         super().__init__(attrib_offsets, emb_dim, 1, lr=lr, l1_penalty=l1_penalty)
         self.model = IndependentAttentionModel(attrib_offsets, emb_dim, n_words)
 
-    def forward(self, x):
+    def forward(self, x: Tuple[torch.Tensor, torch.Tensor]):
         image, mission = x
         return self.model(image, mission)
 
