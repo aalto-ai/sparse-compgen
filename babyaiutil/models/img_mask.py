@@ -131,9 +131,5 @@ class ImageComponentsToMask(nn.Module):
             dim=-1,
         )
         in_channels = in_vectors.transpose(-1, -3).transpose(-2, -1)
-        component_att_embeddings_masks = [
-            # B x C
-            self.conv_att(in_channels, temp=temp)
-            for c in image_components
-        ]
-        return torch.stack(component_att_embeddings_masks, dim=0).mean(dim=0)
+        att_masks = self.conv_att(in_channels)
+        return att_masks
