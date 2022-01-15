@@ -130,6 +130,13 @@ class ImageComponentsToMask(nn.Module):
             ],
             dim=-1,
         )
-        in_channels = in_vectors.transpose(-1, -3).transpose(-2, -1)
+
+        # We hit some pytorch bugs here when doing this, easier to
+        # just clone the tensor and move on
+        in_channels = (
+            in_vectors.transpose(-1, -3)
+            .transpose(-2, -1)
+            .clone(memory_format=torch.contiguous_format)
+        )
         att_masks = self.conv_att(in_channels)
         return att_masks
