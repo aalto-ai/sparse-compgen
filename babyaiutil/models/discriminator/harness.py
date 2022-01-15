@@ -143,8 +143,10 @@ class ImageDiscriminatorHarness(pl.LightningModule):
             target_long.view(-1).shape[0] / label.view(-1).shape[0]
         )
 
+        target_output_type = target.to(output.dtype)
+
         bce_target = F.binary_cross_entropy_with_logits(
-            output, target.float(), pos_weight=pos_weight
+            output, target_output_type, pos_weight=pos_weight
         )
 
         if os.environ.get("DEBUG", "0") == "1":
@@ -152,8 +154,8 @@ class ImageDiscriminatorHarness(pl.LightningModule):
 
             pdb.set_trace()
 
-        precision = soft_precision(output.sigmoid(), target.float())
-        recall = soft_recall(output.sigmoid(), target.float())
+        precision = soft_precision(output.sigmoid(), target_output_type)
+        recall = soft_recall(output.sigmoid(), target_output_type)
         f1 = 2 * (precision * recall) / (precision + recall)
 
         self.log("vtarget", bce_target, prog_bar=True)
