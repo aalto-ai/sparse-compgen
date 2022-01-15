@@ -10,10 +10,8 @@ class SpatialSoftmax(nn.Module):
 
     def forward(self, x):
         return (
-            (
-                self.temp.exp() * torch.relu(x.reshape(*x.shape[:-2], -1)) + self.bias
-            ).softmax(dim=-1)
-        ).reshape(x.shape)
+            (self.temp.exp() * torch.relu(x.flatten(-2)) + self.bias).softmax(dim=-1)
+        ).view(x.shape)
 
 
 class Block(nn.Module):
