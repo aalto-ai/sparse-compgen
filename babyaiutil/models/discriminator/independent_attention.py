@@ -48,7 +48,9 @@ class IndependentAttentionModel(nn.Module):
         super().__init__()
         total_attribs = attrib_offsets[-1]
 
-        self.attrib_offsets = attrib_offsets
+        self.register_buffer(
+            "attrib_offsets", torch.tensor(attrib_offsets, dtype=torch.long)
+        )
         self.attrib_embeddings, self.word_embeddings = init_embeddings_ortho(
             (total_attribs, n_words), embed_dim
         )
@@ -57,27 +59,29 @@ class IndependentAttentionModel(nn.Module):
     def forward(self, image, mission):
         mission_words = self.word_embeddings(mission)
 
-        image_components = [
-            self.attrib_embeddings(image[..., i].long() + self.attrib_offsets[i])
-            for i in range(image.shape[-1])
-        ]
-        attentions = torch.stack(
-            [
-                self.att_encoding(
-                    component.reshape(component.shape[0], -1, component.shape[-1]),
-                    mission_words,
-                )
-                for component in image_components
-            ],
-            dim=0,
+        sep_image_components = self.attrib_embeddings(
+            image.long() + self.attrib_offsets[: image.shape[-1]]
         )
 
-        # Sum over => C x B x (H x W) x L => B x (H x W) => B x H x W
-        cell_scores = (attentions.sum(dim=-1) + 10e-5).log().sum(dim=0).exp()
+        sep_image_components_t = sep_image_components.transpose(-2, -3).transpose(
+            -3, -4
+        )
+        sep_image_components_t_seq = sep_image_components_t.flatten(-3, -2)
+        mission_words_seq = mission_words[..., None, :, :]
+
+        # B x C x (H x W) x L
+        attentions = self.att_encoding(
+            sep_image_components_t_seq,
+            mission_words_seq,
+        )
+
+        # Sum over => C x B x (H x W) x L => B x C x (H x W) => B x (H x W)
+        cell_scores = (attentions.sum(dim=-1) + 10e-5).log().sum(dim=-2).exp()
 
         return (
-            cell_scores.reshape(*image.shape[:-1]).unsqueeze(-1),
-            image_components,
+            # B x (H x W) => B x H x W
+            cell_scores.unflatten(-1, (image.shape[-3], image.shape[-2])).unsqueeze(-1),
+            sep_image_components_t,
             attentions,
         )
 
