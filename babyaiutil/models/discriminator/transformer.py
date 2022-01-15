@@ -93,7 +93,9 @@ class TransformerEncoderDecoderModel(nn.Module):
         num_decoder_layers=4,
     ):
         super().__init__()
-        self.attrib_offsets = attrib_offsets
+        self.register_buffer(
+            "attrib_offsets", torch.tensor(attrib_offsets, dtype=torch.long)
+        )
 
         n_attrib = len(attrib_offsets) - 1
         total_attribs = attrib_offsets[-1]
@@ -113,11 +115,13 @@ class TransformerEncoderDecoderModel(nn.Module):
 
     def forward(self, images, missions):
         mission_words = self.project_words_to_attrib_dim(self.word_embeddings(missions))
-        image_components = [
-            self.attrib_embeddings(images[..., i].long() + self.attrib_offsets[i])
-            for i in range(images.shape[-1])
-        ]
-        cat_image_components = torch.cat(image_components, dim=-1)
+        sep_image_components = self.attrib_embeddings(
+            images.long() + self.attrib_offsets[: images.shape[-1]]
+        )
+        sep_image_components_t = sep_image_components.transpose(-2, -3).transpose(
+            -3, -4
+        )
+        cat_image_components = sep_image_components.flatten(-2)
 
         if False:
             encoded_words = self.transformer.encoder(mission_words.permute(1, 0, 2))
@@ -147,7 +151,7 @@ class TransformerEncoderDecoderModel(nn.Module):
 
             return (
                 out_img,
-                image_components,
+                sep_image_components_t,
                 decoder_att_weights,
                 out_seq,
                 self_att_masks,
@@ -172,7 +176,7 @@ class TransformerEncoderDecoderModel(nn.Module):
                 .permute(2, 0, 1, 3)
             )
 
-            return (out_img, image_components, None, None, None, None)
+            return (out_img, sep_image_components_t, None, None, None, None)
 
 
 def linear_with_warmup_schedule(
