@@ -57,10 +57,12 @@ class ImageSupervisedHarness(pl.LightningModule):
         target = target.long()
         output, _ = self.forward((image[..., :2], mission))
 
+        target_output_type = target.to(output.dtype)
+
         # Ratio of positives to negatives
-        pos_weight = (1 - target).sum() / target.sum()
+        pos_weight = (1 - target_output_type).sum() / target_output_type.sum()
         loss = F.binary_cross_entropy_with_logits(
-            output, target.float(), pos_weight=pos_weight
+            output, target_output_type, pos_weight=pos_weight
         )
 
         if os.environ.get("DEBUG", "0") == "1":
@@ -69,12 +71,13 @@ class ImageSupervisedHarness(pl.LightningModule):
             pdb.set_trace()
 
         self.log("bce", loss, prog_bar=True)
-        self.log(
-            "tsprec", soft_precision(output.sigmoid(), target.float()), prog_bar=True
-        )
-        self.log(
-            "tsrecall", soft_recall(output.sigmoid(), target.float()), prog_bar=True
-        )
+        precision = soft_precision(output.sigmoid(), target_output_type)
+        recall = soft_recall(output.sigmoid(), target_output_type)
+        f1 = 2 * (precision * recall) / (precision + recall)
+
+        self.log("tsprec", precision, prog_bar=True)
+        self.log("tsrecall", recall, prog_bar=True)
+        self.log("tsf1", f1, prog_bar=True)
 
         return loss
 
@@ -83,10 +86,12 @@ class ImageSupervisedHarness(pl.LightningModule):
         target = target.long()
         output, _ = self.forward((image[..., :2], mission))
 
+        target_output_type = target.to(output.dtype)
+
         # Ratio of positives to negatives
         pos_weight = (1 - target).sum() / target.sum()
         loss = F.binary_cross_entropy_with_logits(
-            output, target.float(), pos_weight=pos_weight
+            output, target_output_type, pos_weight=pos_weight
         )
 
         if os.environ.get("DEBUG", "0") == "1":
@@ -94,10 +99,11 @@ class ImageSupervisedHarness(pl.LightningModule):
 
             pdb.set_trace()
 
+        precision = soft_precision(output.sigmoid(), target_output_type)
+        recall = soft_recall(output.sigmoid(), target_output_type)
+        f1 = 2 * (precision * recall) / (precision + recall)
+
         self.log("vtarget", loss, prog_bar=True)
-        self.log(
-            "vsprec", soft_precision(output.sigmoid(), target.float()), prog_bar=True
-        )
-        self.log(
-            "vsrecall", soft_recall(output.sigmoid(), target.float()), prog_bar=True
-        )
+        self.log("vsprec", precision, prog_bar=True)
+        self.log("vsrecall", recall, prog_bar=True)
+        self.log("tsf1", f1, prog_bar=True)
