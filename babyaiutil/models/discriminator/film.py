@@ -59,6 +59,7 @@ class FiLMConvEncoder(nn.Module):
         self.word_embeddings = nn.Embedding(n_words, emb_dim)
         self.word_gru = nn.GRU(emb_dim, emb_dim, bidirectional=True)
         self.film = FiLM(emb_dim * len_offsets, imm_dim, emb_dim * len_offsets, imm_dim)
+        self.projection = nn.Linear(imm_dim, 1)
 
     def forward(self, images, missions):
         mission_s = missions.transpose(0, 1)
@@ -92,13 +93,16 @@ class FiLMConvEncoder(nn.Module):
             .transpose(-1, -3)
             .transpose(-2, -3)
         )
+        projected_filmed_cat_image_components = self.projection(
+            filmed_cat_image_components
+        )
 
-        return filmed_cat_image_components, sep_image_components_t
+        return projected_filmed_cat_image_components, sep_image_components_t
 
 
 class FiLMDiscriminatorHarness(ImageDiscriminatorHarness):
     def __init__(self, attrib_offsets, emb_dim, n_words, lr=10e-4, layer_mults=None):
-        super().__init__(attrib_offsets, emb_dim, 128, lr=lr)
+        super().__init__(attrib_offsets, emb_dim, lr=lr)
         self.film_encoder = FiLMConvEncoder(
             attrib_offsets, emb_dim, n_words, imm_dim=128, layer_mults=layer_mults
         )

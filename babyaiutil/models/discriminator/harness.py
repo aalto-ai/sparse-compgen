@@ -70,10 +70,9 @@ def soft_recall(predictions, targets):
 
 
 class ImageDiscriminatorHarness(pl.LightningModule):
-    def __init__(self, attrib_offsets, emb_dim, out_dim, lr=10e-4, **kwargs):
+    def __init__(self, attrib_offsets, emb_dim, lr=10e-4, **kwargs):
         super().__init__()
         self.to_mask = ImageComponentsToMask(emb_dim, attrib_offsets, [2, 1])
-        self.projection = nn.Linear(out_dim, 1)
         self.save_hyperparameters()
 
     def configure_optimizers(self):
@@ -88,7 +87,7 @@ class ImageDiscriminatorHarness(pl.LightningModule):
         output_tgt, image_components_tgt = self.forward((image_tgt[..., :2], mission))[
             :2
         ]
-        output_tgt = self.projection(output_tgt).squeeze(-1)
+        output_tgt = output_tgt.squeeze(-1)
 
         masks_src = self.to_mask(image_src[..., :2], direction_src)
         masks_tgt = self.to_mask(image_tgt[..., :2], direction_tgt)
@@ -137,7 +136,8 @@ class ImageDiscriminatorHarness(pl.LightningModule):
     def validation_step(self, x, idx, dataloader_idx):
         mission, image, direction, label, target = x
         output, image_components = self.forward((image[..., :2], mission))[:2]
-        output = self.projection(output).squeeze(-1)
+        output = output.squeeze(-1)
+
         target_long = target.long()
         pos_weight = torch.tensor(
             target_long.view(-1).shape[0] / label.view(-1).shape[0]

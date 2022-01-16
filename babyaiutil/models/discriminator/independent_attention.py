@@ -55,6 +55,7 @@ class IndependentAttentionModel(nn.Module):
             (total_attribs, n_words), embed_dim
         )
         self.att_encoding = AttentionWordsEncoding()
+        self.projection = Affine()
 
     def forward(self, image, mission):
         mission_words = self.word_embeddings(mission)
@@ -77,10 +78,14 @@ class IndependentAttentionModel(nn.Module):
 
         # Sum over => C x B x (H x W) x L => B x C x (H x W) => B x (H x W)
         cell_scores = (attentions.sum(dim=-1) + 10e-5).log().sum(dim=-2).exp()
+        # B x (H x W) => B x H x W
+        image_cell_scores = cell_scores.unflatten(
+            -1, (image.shape[-3], image.shape[-2])
+        ).unsqueeze(-1)
+        projected_image_cell_scores = self.projection(image_cell_scores)
 
         return (
-            # B x (H x W) => B x H x W
-            cell_scores.unflatten(-1, (image.shape[-3], image.shape[-2])).unsqueeze(-1),
+            projected_image_cell_scores,
             sep_image_components_t,
             attentions,
         )
@@ -88,7 +93,7 @@ class IndependentAttentionModel(nn.Module):
 
 class IndependentAttentionDiscriminatorHarness(ImageDiscriminatorHarness):
     def __init__(self, attrib_offsets, emb_dim, n_words, lr=10e-4, l1_penalty=0):
-        super().__init__(attrib_offsets, emb_dim, 1, lr=lr, l1_penalty=l1_penalty)
+        super().__init__(attrib_offsets, emb_dim, lr=lr, l1_penalty=l1_penalty)
         self.model = IndependentAttentionModel(attrib_offsets, emb_dim, n_words)
 
     def forward(self, x: Tuple[torch.Tensor, torch.Tensor]):

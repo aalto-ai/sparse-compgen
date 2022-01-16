@@ -112,6 +112,7 @@ class TransformerEncoderDecoderModel(nn.Module):
             dim_feedforward=emb_dim * n_attrib * 2,
             dropout=0,
         )
+        self.projection = nn.Linear(emb_dim * n_attrib, 1)
 
     def forward(self, images, missions):
         mission_words = self.project_words_to_attrib_dim(self.word_embeddings(missions))
@@ -138,6 +139,7 @@ class TransformerEncoderDecoderModel(nn.Module):
                 cat_image_components.shape[0],
                 cat_image_components.shape[3],
             ).permute(2, 0, 1, 3)
+            projected_out_img = self.projection(out_img)
 
             decoder_att_weights = (
                 (
@@ -150,7 +152,7 @@ class TransformerEncoderDecoderModel(nn.Module):
             ).log()
 
             return (
-                out_img,
+                projected_out_img,
                 sep_image_components_t,
                 decoder_att_weights,
                 out_seq,
@@ -175,8 +177,9 @@ class TransformerEncoderDecoderModel(nn.Module):
                 )
                 .permute(2, 0, 1, 3)
             )
+            projected_out_img = self.projection(out_img)
 
-            return (out_img, sep_image_components_t, None, None, None, None)
+            return (projected_out_img, sep_image_components_t, None, None, None, None)
 
 
 def linear_with_warmup_schedule(
@@ -209,7 +212,7 @@ def linear_with_warmup_schedule(
 
 class TransformerDiscriminatorHarness(ImageDiscriminatorHarness):
     def __init__(self, attrib_offsets, emb_dim, n_words, lr=10e-4):
-        super().__init__(attrib_offsets, emb_dim, emb_dim * 2, lr=lr)
+        super().__init__(attrib_offsets, emb_dim, lr=lr)
         self.encoder = TransformerEncoderDecoderModel(attrib_offsets, emb_dim, n_words)
 
     def configure_optimizers(self):
