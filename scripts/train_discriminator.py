@@ -117,6 +117,7 @@ def do_experiment(args):
     trainer = pl.Trainer(
         max_steps=args.iterations,
         gpus=1,
+        precision=16,
         default_root_dir=f"logs/{model_dir}/{exp_name}",
         callbacks=callbacks,
         val_check_interval=args.check_val_every,
