@@ -119,7 +119,7 @@ class MVProp2D(nn.Module):
             ).squeeze(-1)
             value_map_candidate = gather_map * (
                 (gamma_eval * value_map_unfolded) * value_flow
-            ).reshape(B, H, W, -1).max(dim=-1)[0].unsqueeze(-1)
+            ).flatten(3).max(dim=-1)[0].unsqueeze(-1)
 
             # Concatenate with the current value map, pick
             # the max value that we've currently observed
