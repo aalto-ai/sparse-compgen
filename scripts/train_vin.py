@@ -15,6 +15,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import ConcatDataset, Dataset, DataLoader
 import pytorch_lightning as pl
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 from gym_minigrid.minigrid import OBJECT_TO_IDX, COLOR_TO_IDX
 
@@ -178,9 +179,17 @@ def do_experiment(args):
 
     print(model)
     print(check_val_opts)
+
+    checkpoint_cb = ModelCheckpoint(
+        monitor="vsucc/dataloader_idx_0",
+        auto_insert_metric_name=False,
+        save_top_k=5,
+        mode="max",
+    )
+
     pl.seed_everything(args.seed)
     trainer = pl.Trainer(
-        callbacks=[pl.callbacks.LearningRateMonitor()],
+        callbacks=[pl.callbacks.LearningRateMonitor(), checkpoint_cb],
         max_steps=args.iterations,
         gpus=1,
         default_root_dir=f"logs/{model_dir}/{exp_name}",
@@ -190,6 +199,8 @@ def do_experiment(args):
     trainer.fit(model, train_dataloader, [val_id_dataloader_il, val_ood_dataloader_il])
     print(f"Done, saving {model_path}")
     trainer.save_checkpoint(f"{model_path}")
+    print("Saving checkpoints info")
+    checkpoint_cb.to_yaml()
 
 
 def main():
