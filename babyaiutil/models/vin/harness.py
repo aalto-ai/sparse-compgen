@@ -91,11 +91,11 @@ class VINHarness(pl.LightningModule):
 
         return (
             torch.log_softmax(values.reshape(B, L, values.shape[-1]), dim=-1),
-            values.reshape(B, L, values.shape[-1]),
+            values.unflatten(0, (B, L)),
             cat_image_components,
-            gather_maps.reshape(B, L, H, W, 1),
-            value_maps.reshape(B, L, H, W, 1),
-            reward_maps.reshape(B, L, H, W, 1),
+            gather_maps.unflatten(0, (B, L)).unsqueeze(-1),
+            value_maps.unflatten(0, (B, L)).unsqueeze(-1),
+            reward_maps.unflatten(0, (B, L)).unsqueeze(-1),
         )
 
     def training_step(self, x, step_index):
