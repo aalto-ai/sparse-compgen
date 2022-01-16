@@ -25,14 +25,14 @@ def unfold_neighbourhood(image, kernel_size, pad_value):
 
 class SpatialMinMaxNormalization(nn.Module):
     def forward(self, x):
-        reshaped = x.reshape(*x.shape[:-3], -1)
+        reshaped = x.flatten(-3)
         minimum = reshaped.min(dim=-1)[0][..., None].detach()
         maximum = reshaped.max(dim=-1)[0][..., None].detach()
         scale = maximum - minimum + 10e-5
 
         normalized = (reshaped - minimum) / scale
 
-        return normalized.reshape(x.shape)
+        return normalized.view(x.shape)
 
 
 class Readjustment(nn.Module):
