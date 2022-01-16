@@ -40,14 +40,17 @@ class VINHarness(pl.LightningModule):
             :2
         ]
         binary_scores = scores.sigmoid()
-        cat_image_components = torch.cat(image_components, dim=-1)
 
-        B, L, H, W, C = cat_image_components.shape
-
-        trajectory_flat_image_components = cat_image_components.reshape(
-            -1, H, W, cat_image_components.shape[-1]
+        # image_components is B x L x C x H x W x E
+        #
+        # swap B x C x H x W x E => B x H x C x W x E => B x H x W x C x E
+        # flatten B x H x W x C x E => B x H x W x (C x E)
+        cat_image_components = (
+            image_components.transpose(-4, -3).transpose(-3, -2).flatten(-2)
         )
-        flat_matches = binary_scores.reshape(-1, H, W, 1)
+
+        trajectory_flat_image_components = cat_image_components.flatten(0, 1)
+        flat_matches = binary_scores.flatten(0, 1)
 
         gather_maps, value_maps, reward_maps = self.mvprop(
             trajectory_flat_image_components, flat_matches
@@ -67,10 +70,17 @@ class VINHarness(pl.LightningModule):
             gather_maps,
             value_maps,
             reward_maps,
-        ) = self.value_map_from_image((images[..., :2], directions, missions))
+        ) = self.value_map_from_image(
+            (
+                images[..., :2],
+                directions,
+                # Add the L dimension to missions as well
+                missions.unsqueeze(-2),
+            )
+        )
 
         B, L, H, W, C = cat_image_components.shape
-        trajectory_flat_image_components = cat_image_components.reshape(-1, H, W, C)
+        trajectory_flat_image_components = cat_image_components.flatten(0, 1)
 
         values = self.value(
             directions.flatten(),
