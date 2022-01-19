@@ -92,15 +92,15 @@ class ImageDiscriminatorHarness(pl.LightningModule):
         masks_src = self.to_mask(image_src[..., :2], direction_src)
         masks_tgt = self.to_mask(image_tgt[..., :2], direction_tgt)
 
-        masked_output_label = (
-            masks_tgt.detach().squeeze(1) * label.to(masks_tgt.dtype)[:, None, None]
-        )
-        pos_weight = torch.tensor(
-            masked_output_label.view(-1).shape[0] / label.view(-1).shape[0]
-        )
+        # Just add the log-masks, the output is already log-domain
+        masked_tgt = ((masks_tgt.squeeze(-3) + 10e-7).log() + output_tgt)
+
+        # Need to take the exp and sum in the non-log domain for spatial-summing
+        # to make any sense (we're summing over the product, or the log-sum).
+        sum_tgt = masked_tgt.exp().sum(dim=-1).sum(dim=-1).log()
 
         loss = F.binary_cross_entropy_with_logits(
-            output_tgt, masked_output_label, pos_weight=pos_weight
+            sum_tgt, label.to(masks_tgt.dtype)
         )
 
         # Using mse_loss here instead of BCE loss since doesn't penalize
