@@ -116,11 +116,9 @@ class ImageDiscriminatorHarness(pl.LightningModule):
         )
 
         masks = torch.cat([masks_src, masks_tgt], dim=0)
-        masks_entropy = (
-            torch.distributions.Categorical(probs=masks.flatten(0, -2).flatten(0, -2))
-            .entropy()
-            .mean()
-        )
+        masks_entropy = torch.special.entr(
+            masks.flatten(0, -2).flatten(0, -2).clamp(10e-7, 1.0)
+        ).sum(dim=-1).mean()
 
         if os.environ.get("DEBUG", "0") == "1":
             import pdb
