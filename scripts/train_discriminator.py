@@ -14,6 +14,9 @@ from babyaiutil.datasets.discriminator import (
     make_initial_observation_discriminator_dataset_from_trajectories,
 )
 from babyaiutil.models.discriminator.film import FiLMDiscriminatorHarness
+from babyaiutil.models.discriminator.simple_attention import (
+    SimpleAttentionDiscriminatorHarness,
+)
 from babyaiutil.models.discriminator.transformer import TransformerDiscriminatorHarness
 from babyaiutil.models.discriminator.independent_attention import (
     IndependentAttentionDiscriminatorHarness,
@@ -26,6 +29,8 @@ MODELS = {
     "transformer": TransformerDiscriminatorHarness,
     "independent": IndependentAttentionDiscriminatorHarness,
     "independent_noreg": IndependentAttentionDiscriminatorHarness,
+    "simple": SimpleAttentionDiscriminatorHarness,
+    "simple_noreg": SimpleAttentionDiscriminatorHarness,
 }
 
 
@@ -110,7 +115,7 @@ def do_experiment(args):
         [
             ScheduleHparamCallback("l1_penalty", 0, 10e-1, 1000, 5000),
         ]
-        if args.model == "independent"
+        if args.model in ("independent", "simple")
         else []
     ) + [checkpoint_cb]
 
