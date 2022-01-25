@@ -93,7 +93,7 @@ class ImageDiscriminatorHarness(pl.LightningModule):
         masks_tgt = self.to_mask(image_tgt[..., :2], direction_tgt)
 
         # Just add the log-masks, the output is already log-domain
-        masked_tgt = ((masks_tgt.squeeze(-3) + 10e-7).log() + output_tgt)
+        masked_tgt = ((masks_tgt.detach().squeeze(-3) + 10e-7).log() + output_tgt)
 
         # Need to take the exp and sum in the non-log domain for spatial-summing
         # to make any sense (we're summing over the product, or the log-sum).
