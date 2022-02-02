@@ -4,6 +4,7 @@ import math
 import os
 import operator
 import pickle
+import sys
 
 import babyai
 
@@ -201,6 +202,7 @@ def do_experiment(args):
         precision=16,
         default_root_dir=f"logs/{model_dir}/{exp_name}",
         accumulate_grad_batches=1,
+        enable_progress_bar=sys.stdout.isatty(),
         **check_val_opts,
     )
     trainer.fit(model, train_dataloader, [val_id_dataloader_il, val_ood_dataloader_il])
