@@ -58,11 +58,9 @@ class ImitationLearningHarness(pl.LightningModule):
         loss = compute_imitation_loss(
             policy_logits[bool_masks], taken_actions[bool_masks]
         )
-        entropy = (
-            torch.distributions.Categorical(logits=F.log_softmax(policy_logits, dim=-1))
-            .entropy()
-            .mean()
-        )
+        entropy = torch.special.entr(
+            torch.softmax(policy_logits, dim=-1).clamp(10e-7, 1.0)
+        ).sum(dim=-1).mean()
 
         self.log("tloss", loss.item(), prog_bar=True)
         self.log("tentropy", entropy.item(), prog_bar=True)
