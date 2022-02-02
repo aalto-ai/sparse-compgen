@@ -62,8 +62,8 @@ class ImitationLearningHarness(pl.LightningModule):
             torch.softmax(policy_logits, dim=-1).clamp(10e-7, 1.0)
         ).sum(dim=-1).mean()
 
-        self.log("tloss", loss.item(), prog_bar=True)
-        self.log("tentropy", entropy.item(), prog_bar=True)
+        self.log("tloss", loss, prog_bar=True)
+        self.log("tentropy", entropy, prog_bar=True)
         return loss - self.hparams.entropy_bonus * entropy
 
     def validation_step(self, x, idx, dl_idx):
@@ -77,10 +77,10 @@ class ImitationLearningHarness(pl.LightningModule):
                 )
             )
 
-        self.log("vsucc", success.item(), prog_bar=True)
+        self.log("vsucc", success, prog_bar=True)
 
     def test_step(self, x, idx):
         rewards = x
         success = (rewards > 0).to(torch.float).mean()
 
-        self.log("tsucc", success.item(), prog_bar=True)
+        self.log("tsucc", success, prog_bar=True)
