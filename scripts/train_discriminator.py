@@ -2,6 +2,7 @@ import argparse
 import math
 import os
 import pickle
+import sys
 
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
@@ -126,6 +127,7 @@ def do_experiment(args):
         default_root_dir=f"logs/{model_dir}/{exp_name}",
         callbacks=callbacks,
         val_check_interval=args.check_val_every,
+        enable_progress_bar=sys.stdout.isatty(),
     )
     pl.seed_everything(args.seed)
     trainer.fit(
