@@ -73,6 +73,12 @@ def parser():
         type=str,
         help="Path to an interaction model to load",
     )
+    parser.add_argument(
+        "--vin-k",
+        default=10,
+        type=int,
+        help="Number of VIN iterations"
+    )
     return parser
 
 
@@ -156,7 +162,7 @@ def do_experiment(args):
         )
         print("Loaded interaction model", args.load_interaction_model)
 
-    model = MODELS[args.model](interaction_module, offsets, 48, lr=1e-3)
+    model = MODELS[args.model](interaction_module, offsets, 48, lr=1e-3, k=args.vin_k)
 
     train_dataloader = DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True
