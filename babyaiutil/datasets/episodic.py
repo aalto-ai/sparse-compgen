@@ -100,7 +100,7 @@ def create_proc_with_pipe(target_fn, args):
     return p, local
 
 
-class ParallelEnv(gym.Env):
+class ParallelEnvMultiproc(gym.Env):
     """A concurrent execution of environments in multiple processes."""
 
     def __init__(self, env_name, n_envs):
@@ -142,6 +142,58 @@ class ParallelEnv(gym.Env):
     def __del__(self):
         for p in self.processes:
             p.terminate()
+
+
+class ParallelEnvSingle(gym.Env):
+    """A specialization of ParallelEnv with one process."""
+
+    def __init__(self, env_name):
+        self.env_name = env_name
+        self.env = gym.make(self.env_name)
+
+    def reset(self):
+        return [self.env.reset()]
+
+    def seed(self, seeds):
+        self.env.seed(seeds[0])
+
+    def step(self, actions):
+        return [self.env.step(actions[0])]
+
+    def render(self):
+        raise NotImplementedError
+
+    @property
+    def n_envs(self):
+        return 1
+
+
+class ParallelEnv(gym.Env):
+    """A wrapper for concurrent execution."""
+
+    def __init__(self, env_name, n_envs):
+        assert n_envs >= 1, "No environment given."
+
+        if n_envs == 1:
+            self.base = ParallelEnvSingle(env_name)
+        else:
+            self.base = ParallelEnvMultiproc(env_name, n_envs)
+
+    def reset(self):
+        return self.base.reset()
+
+    def seed(self, seeds):
+        return self.base.seed(seeds)
+
+    def step(self, actions):
+        return self.base.step(actions)
+
+    def render(self):
+        return self.base.render()
+
+    @property
+    def n_envs(self):
+        return self.base.n_envs
 
 
 def collect_experience_from_policy(
