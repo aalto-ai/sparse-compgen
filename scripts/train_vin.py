@@ -1,5 +1,6 @@
 import argparse
 import itertools
+import json
 import math
 import os
 import operator
@@ -106,6 +107,47 @@ def filter_state_dict(state_dict, prefix):
     return {k.lstrip(prefix): v for k, v in state_dict.items() if k.startswith(prefix)}
 
 
+def memory_mapped_arrays(path):
+    print("Memory-mapped archives in", path)
+    with open(os.path.join(path, "contents.json"), "r") as f:
+        contents = json.load(f)
+
+    return {
+        os.path.splitext(os.path.basename(k))[0]: np.memmap(
+            os.path.join(path, k), dtype=dtype, shape=tuple(shape), mode="r"
+        )
+        for k, (dtype, shape) in contents.items()
+    }
+
+
+def load_json(path):
+    print("Load json", path)
+    with open(path, "r") as f:
+        return json.load(f)
+
+
+def load_data_directory(path):
+    words = load_json(os.path.join(path, "words/words.json"))
+    word2idx = load_json(os.path.join(path, "words/word2idx.json"))
+    train_trajectories = memory_mapped_arrays(os.path.join(path, "train"))
+    valid_trajectories = memory_mapped_arrays(os.path.join(path, "valid"))
+
+    return (train_trajectories, valid_trajectories, words, word2idx)
+
+
+def load_data_archive(path):
+    with open(path, "rb") as f:
+        print("Opened", f.name)
+        return np.load(f, allow_pickle=True)
+
+
+def load_data(path):
+    if os.path.isdir(path):
+        return load_data_directory(path)
+
+    return load_data_archive(path)
+
+
 def do_experiment(args):
     effective_limit = min(
         [args.limit or (args.total - args.vlimit), args.total - args.vlimit]
@@ -133,11 +175,7 @@ def do_experiment(args):
     # into memory.
     parallel_env = ParallelEnv("BabyAI-GoToLocal-v0", args.n_eval_procs)
 
-    with open(args.data, "rb") as f:
-        print("Opened", f.name)
-        (train_trajectories, valid_trajectories, words, word2idx) = np.load(
-            f, allow_pickle=True
-        )
+    (train_trajectories, valid_trajectories, words, word2idx) = load_data(args.data)
 
     train_dataset = make_trajectory_dataset_from_trajectories(
         train_trajectories, limit=effective_limit
