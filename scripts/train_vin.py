@@ -76,10 +76,7 @@ def parser():
         help="Path to an interaction model to load",
     )
     parser.add_argument(
-        "--vin-k",
-        default=10,
-        type=int,
-        help="Number of VIN iterations"
+        "--vin-k", default=10, type=int, help="Number of VIN iterations"
     )
     return parser
 
