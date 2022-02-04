@@ -12,6 +12,7 @@ from .resnet_value import (
     BigConvolutionValueMapExtractor,
     ConvolutionMaskValueMapExtractor,
 )
+import sys
 
 
 class VINHarness(pl.LightningModule):
@@ -158,11 +159,12 @@ class VINHarness(pl.LightningModule):
         rewards = x
         success = (rewards > 0).to(torch.float).mean()
 
-        tqdm.write(
-            "val dl {} batch {} succ {} shape {}".format(
-                dl_idx, idx, success.item(), x.shape
+        if sys.stdout.isatty():
+            tqdm.write(
+                "val dl {} batch {} succ {} shape {}".format(
+                    dl_idx, idx, success.item(), x.shape
+                )
             )
-        )
 
         self.log("vsucc", success.item(), prog_bar=True)
 
