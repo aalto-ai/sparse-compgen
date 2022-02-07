@@ -9,6 +9,8 @@ import sys
 
 import babyai
 
+from tqdm import tqdm
+
 import numpy as np
 import pandas as pd
 from torch.distributions import Categorical
@@ -148,9 +150,9 @@ def load_data(path):
 
 
 def print_top_n_stats(stats, n, idx):
-    print(f"Memory snapshot at at {idx}")
+    tqdm.write(f"Memory snapshot at at {idx}")
     for stat in stats[:n]:
-        print(stat)
+        tqdm.write(f"{stat}")
 
 
 class MemoryStatsMonitor(pl.callbacks.base.Callback):
