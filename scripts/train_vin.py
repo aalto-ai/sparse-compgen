@@ -32,6 +32,8 @@ from babyaiutil.models.discriminator.independent_attention import (
 )
 from babyaiutil.models.vin.harness import VINHarness
 
+import tracemalloc
+
 
 INTERACTION_MODEL = {"independent": IndependentAttentionModel}
 
@@ -143,6 +145,36 @@ def load_data(path):
         return load_data_directory(path)
 
     return load_data_archive(path)
+
+
+def print_top_n_stats(stats, n, idx):
+    print(f"Memory snapshot at at {idx}")
+    for stat in stats[:n]:
+        print(stat)
+
+
+class MemoryStatsMonitor(pl.callbacks.base.Callback):
+    def __init__(self, print_every, track_top_n):
+        super().__init__()
+        self.last_snapshot = None
+        self.print_every = print_every
+        self.track_top_n = track_top_n
+
+    def on_train_start(self, trainer, pl_module):
+        self.last_snapshot = None
+        tracemalloc.start()
+
+    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
+        if batch_idx % self.print_every == 0:
+            snapshot = tracemalloc.take_snapshot()
+            if self.last_snapshot:
+                print_top_n_stats(
+                    snapshot.compare_to(self.last_snapshot, "lineno"), 20, batch_idx
+                )
+            else:
+                print_top_n_stats(snapshot.statistics("lineno"), 20, batch_idx)
+
+            self.last_snapshot = snapshot
 
 
 def do_experiment(args):
