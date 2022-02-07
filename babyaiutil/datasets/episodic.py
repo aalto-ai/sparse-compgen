@@ -64,8 +64,6 @@ def worker(conn, env_name):
     reward = 0
     info = None
 
-    env = gym.make(env_name)
-
     while True:
         cmd, data = conn.recv()
         if cmd == "step":
@@ -78,10 +76,11 @@ def worker(conn, env_name):
 
                 conn.send((obs, reward, done, info))
         elif cmd == "seed":
+            env = gym.make(env_name)
             env.seed(data)
             np.random.seed(data)
-        elif cmd == "reset":
             gc.collect()
+        elif cmd == "reset":
             obs = env.reset()
             obs = wrap_state(env, obs)
             done = False
