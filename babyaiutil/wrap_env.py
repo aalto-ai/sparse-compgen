@@ -5,10 +5,15 @@ def correct_rotation(image, direction):
     return np.fliplr(np.rot90(image, direction)).copy()
 
 
-def wrap_state(env, d):
-    d["rendered"] = env.grid.render(32, env.agent_pos, env.agent_dir)
+def correct_state_rotations(d):
     d["image"] = correct_rotation(d["image"], d["direction"])
     d["target_mask"] = correct_rotation(d["target_mask"], d["direction"])
+    return d
+
+
+def wrap_state(env, d):
+    d["rendered"] = env.grid.render(32, env.agent_pos, env.agent_dir)
+    d = correct_state_rotations(d)
     return d
 
 
