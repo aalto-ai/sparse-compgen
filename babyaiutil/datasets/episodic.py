@@ -10,6 +10,8 @@ from torch.utils.data import Dataset, IterableDataset
 
 from ..wrap_env import correct_state_rotations
 
+import sys
+
 
 def compute_returns(rewards, gamma=0.9):
     returns = np.zeros(rewards.shape[0])
@@ -55,6 +57,21 @@ def act_in_envs(envs, actions, previous_dones):
             dones.append(done)
 
     return np.stack(images), np.array(directions), np.array(rewards), np.array(dones)
+
+
+def print_top_n_stats(stats, n, idx):
+    print(f"Memory snapshot at at {idx}")
+    for stat in stats[:n]:
+        print(f"{stat}")
+
+    sys.stdout.flush()
+
+
+def print_top_stats(stats):
+    for stat in stats:
+        print("%s memory blocks: %.1f KiB" % (stat.count, stat.size / 1024))
+        for line in stat.traceback.format():
+            print(line)
 
 
 def worker(conn, env_name):
