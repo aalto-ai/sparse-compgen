@@ -240,6 +240,7 @@ def collect_experience_from_policy(
         device = getattr(first_parameter, "device", None) or "cpu"
 
         policy_model.eval()
+        parallel_env.reboot()
 
         for seeds_batch in grouper(seeds, parallel_env.n_envs):
             remaining_seeds_batch = [
@@ -324,6 +325,8 @@ def collect_experience_from_policy(
                         plt.show()
 
             yield from successes
+
+        parallel_env.shutdown()
 
     return generate_experiences
 
