@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, IterableDataset
 
-from ..wrap_env import wrap_state
+from ..wrap_env import correct_state_rotations
 
 
 def compute_returns(rewards, gamma=0.9):
@@ -37,8 +37,7 @@ def act_in_envs(envs, actions, previous_dones):
     for env, prev_done, action in zip(envs, previous_dones, actions):
         # Already done, no need to act in the environment
         if prev_done:
-            obs = env.gen_obs()
-            obs = wrap_state(env, obs)
+            obs = correct_state_rotations(env.gen_obs())
 
             images.append(obs["image"])
             directions.append(obs["direction"])
@@ -48,7 +47,7 @@ def act_in_envs(envs, actions, previous_dones):
             # Not done, yet, act in the environment
             obs, reward, done, _ = env.step(action.item())
             reward = 1 if (reward > 0) else 0
-            obs = wrap_state(env, obs)
+            obs = correct_state_rotations(obs)
 
             images.append(obs["image"])
             directions.append(obs["direction"])
@@ -72,7 +71,7 @@ def worker(conn, env_name):
                 conn.send((obs, reward, done, info))
             else:
                 obs, reward, done, info = env.step(data)
-                obs = wrap_state(env, obs)
+                obs = correct_state_rotations(obs)
 
                 conn.send((obs, reward, done, info))
         elif cmd == "seed":
@@ -81,8 +80,7 @@ def worker(conn, env_name):
             np.random.seed(data)
             gc.collect()
         elif cmd == "reset":
-            obs = env.reset()
-            obs = wrap_state(env, obs)
+            obs = correct_state_rotations(env.reset())
             done = False
             conn.send(obs)
         else:
