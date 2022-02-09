@@ -6,6 +6,7 @@ import os
 import operator
 import pickle
 import sys
+import multiprocessing
 
 import babyai
 
@@ -288,4 +289,5 @@ def main():
 
 
 if __name__ == "__main__":
+    multiprocessing.set_start_method('forkserver')
     main()
