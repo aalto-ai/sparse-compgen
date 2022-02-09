@@ -4,8 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from scipy.stats import ortho_group
-
 from ..img_mask import ImageComponentsToMask
 from .harness import ImageDiscriminatorHarness
 
@@ -35,6 +33,8 @@ class Affine(nn.Module):
 
 
 def init_embeddings_ortho(embedding_sizes, embed_dim):
+    from scipy.stats import ortho_group
+
     return [
         nn.Embedding.from_pretrained(
             torch.from_numpy(ortho_group.rvs(embed_dim)[:s]).float(), freeze=False
