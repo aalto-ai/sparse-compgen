@@ -40,9 +40,7 @@ def parser():
     parser.add_argument("--data", required=True)
     parser.add_argument("--exp-name", required=True)
     parser.add_argument("--seed", required=True, type=int)
-    parser.add_argument(
-        "--model", choices=list(MODELS.keys())
-    )
+    parser.add_argument("--model", choices=list(MODELS.keys()))
     parser.add_argument(
         "--limit", default=None, type=int, help="Training set limit (per task)"
     )
