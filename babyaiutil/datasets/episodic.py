@@ -125,10 +125,7 @@ class ParallelEnvMultiproc(gym.Env):
 
         self.locals = []
         self.processes = []
-        for _ in range(n_envs):
-            p, local = create_proc_with_pipe(worker, args=(self.env_name,))
-            self.locals.append(local)
-            self.processes.append(p)
+        self.n_envs = n_envs
 
     def reset(self):
         for local in self.locals:
@@ -150,13 +147,25 @@ class ParallelEnvMultiproc(gym.Env):
     def render(self):
         raise NotImplementedError
 
-    @property
-    def n_envs(self):
-        return len(self.locals)
-
-    def __del__(self):
+    def shutdown(self):
         for p in self.processes:
             p.terminate()
+        self.locals = []
+        self.processes = []
+
+    def reboot(self):
+        for p in self.processes:
+            p.terminate()
+
+        self.locals = []
+        self.processes = []
+        for i in range(self.n_envs):
+            p, local = create_proc_with_pipe(worker, args=(self.env_name, i))
+            self.locals.append(local)
+            self.processes.append(p)
+
+    def __del__(self):
+        self.shutdown()
 
 
 class ParallelEnvSingle(gym.Env):
@@ -177,6 +186,12 @@ class ParallelEnvSingle(gym.Env):
 
     def render(self):
         raise NotImplementedError
+
+    def shutdown(self):
+        pass
+
+    def reboot(self):
+        pass
 
     @property
     def n_envs(self):
@@ -205,6 +220,12 @@ class ParallelEnv(gym.Env):
 
     def render(self):
         return self.base.render()
+
+    def shutdown(self):
+        return self.base.shutdown()
+
+    def reboot(self):
+        return self.base.reboot()
 
     @property
     def n_envs(self):
