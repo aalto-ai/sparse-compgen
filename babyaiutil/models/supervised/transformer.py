@@ -28,7 +28,7 @@ def linear_with_warmup_schedule(
             / float(num_training_steps - num_warmup_steps),
         )
         logscale = scale * min_lr_logscale
-        multiplier = 10 ** logscale
+        multiplier = 10**logscale
 
         return multiplier
 
