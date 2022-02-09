@@ -10,7 +10,7 @@ def main():
 
     limit_npow_2 = np.floor(np.log(args.limit) / np.log(2)).astype(int)
     limits = np.around(
-        np.geomspace(2 ** 5, 2 ** limit_npow_2, num=limit_npow_2 - 4)
+        np.geomspace(2**5, 2**limit_npow_2, num=limit_npow_2 - 4)
     ).astype(int)
 
     for limit in limits:
