@@ -96,7 +96,7 @@ def worker(conn, env_name, index):
             env = gym.make(env_name)
             env.seed(data)
             np.random.seed(data)
-            gc.collect()
+
         elif cmd == "reset":
             obs = correct_state_rotations(env.reset())
             done = False
