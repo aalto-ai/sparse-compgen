@@ -31,7 +31,7 @@ def fixup_transformer_layer_init(transformer_layer, n_layers):
             ).requires_grad_(False)
         elif name in ["self_attn.v_proj.weight"]:
             param.requires_grad_(False).mul_(
-                2 ** 0.5 * ((0.67 * (n_layers) ** (-1.0 / 4.0)))
+                2**0.5 * ((0.67 * (n_layers) ** (-1.0 / 4.0)))
             ).requires_grad_(False)
 
 
@@ -326,7 +326,7 @@ def linear_with_warmup_schedule(
             / float(num_training_steps - num_warmup_steps),
         )
         logscale = scale * min_lr_logscale
-        multiplier = 10 ** logscale
+        multiplier = 10**logscale
 
         return multiplier
 
