@@ -75,6 +75,7 @@ def print_top_stats(stats):
 
 
 def worker(conn, env_name, index):
+    env = None
     done = False
     obs = None
     reward = 0
