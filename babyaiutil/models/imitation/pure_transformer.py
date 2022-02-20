@@ -276,45 +276,83 @@ class TransformerModel(nn.Module):
             fixup_transformer(self.transformer)
 
     def forward(self, sentences, image_sequences):
-        batch_size, seq_len, width, height, features = image_sequences.shape
+        return self.transformer(
+            sentences.permute(1, 0, 2),
+            image_sequences.permute(1, 0, 2),
+        ).permute(1, 0, 2)
 
-        # Reshape image_sequences so that the transformer is just processing one big
-        # batch and doesn't have to care about the sequence dimension
-        image_sequences = image_sequences.reshape(
-            batch_size * seq_len, width, height, features
+
+class TransformerDecoderClassifier(nn.Module):
+    def __init__(
+        self,
+        hidden_dim,
+        obs_nheads,
+        n_encoder_layers,
+        n_decoder_layers,
+        dropout=0,
+        fixup=False,
+    ):
+        super().__init__()
+        self.transformer = TransformerModel(
+            hidden_dim,
+            obs_nheads,
+            n_encoder_layers,
+            n_decoder_layers,
+            dropout=dropout,
+            fixup=fixup,
         )
-        sentences = sentences.repeat_interleave(seq_len, dim=0)
+        self.cls_token = nn.Parameter(torch.randn(hidden_dim))
 
-        image_sequences_embeddings = image_sequences
-        sentences_embeddings = sentences
-
-        # Add the final token to the image sequences
-        image_sequences_embeddings = image_sequences_embeddings.reshape(
-            batch_size * seq_len, width * height, -1
-        )
-        image_sequences_embeddings = torch.cat(
+    def forward(self, input_sequence, output_sequence):
+        output_sequence = torch.cat(
             [
-                image_sequences_embeddings,
-                self.final_image_sequence_token.expand(
-                    batch_size * seq_len, 1, self.hidden_dim
+                output_sequence,
+                self.cls_token.expand(
+                    output_sequence.shape[0], 1, self.cls_token.shape[0]
                 ),
             ],
             dim=1,
         )
 
         y = self.transformer(
-            sentences_embeddings.permute(1, 0, 2),
-            image_sequences_embeddings.permute(1, 0, 2),
-        ).permute(1, 0, 2)
-
-        # Now re-arrange so that our sequence dimension is back where it was. Note that we
-        # have width * height + 1 now
-        y = y.reshape(batch_size * seq_len, width * height + 1, -1)
+            input_sequence,
+            output_sequence,
+        )
 
         # We take the very last token
         classification_token = y[:, -1, :]
 
-        return classification_token.reshape(batch_size, seq_len, -1)
+        return classification_token
+
+
+class TransformerSentenceImageSequenceModel(nn.Module):
+    def __init__(self, transformer_model):
+        super().__init__()
+        self.transformer_model = transformer_model
+
+    def forward(self, sentence, image_sequence):
+        batch_size, seq_len, width, height, features = image_sequence.shape
+
+        # Reshape image_sequences so that the transformer is just processing one big
+        # batch and doesn't have to care about the sequence dimension
+        image_sequence = image_sequence.reshape(
+            batch_size * seq_len, width, height, features
+        )
+        sentence = sentence.repeat_interleave(seq_len, dim=0)
+
+        image_sequences_embeddings = image_sequence
+        sentences_embeddings = sentence
+
+        # Flatten sequences
+        image_sequences_embeddings = image_sequences_embeddings.reshape(
+            batch_size * seq_len, width * height, -1
+        )
+
+        output_seq = self.transformer_model(
+            sentences_embeddings, image_sequences_embeddings
+        )
+
+        return output_seq.unflatten(0, (batch_size, seq_len))
 
 
 def subsequent_mask_like(sequence):
@@ -472,13 +510,15 @@ class TransformerModelWithDirection(nn.Module):
         fixup=False,
     ):
         super().__init__()
-        self.transformer = TransformerModel(
-            hidden_dim,
-            obs_nheads,
-            n_encoder_layers,
-            n_decoder_layers,
-            dropout=dropout,
-            fixup=fixup,
+        self.transformer = TransformerSentenceImageSequenceModel(
+            TransformerDecoderClassifier(
+                hidden_dim,
+                obs_nheads,
+                n_encoder_layers,
+                n_decoder_layers,
+                dropout=dropout,
+                fixup=fixup,
+            )
         )
 
     def forward(self, sentences, image_sequences, directions):
