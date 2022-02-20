@@ -221,7 +221,7 @@ class ZerosEmbedder(nn.Module):
 
     def forward(self, sequence):
         # Index zeros into self.param
-        self.param[None, :][torch.zeros_like(sequence)]
+        return self.param[None, :][torch.zeros_like(sequence)]
 
 
 def make_output_sequence_encoder(emb_dim):
@@ -275,10 +275,9 @@ class TransformerModel(nn.Module):
             fixup_embedding_init(self.img_embeddings.embedding.weight, n_decoder_layers)
             fixup_transformer(self.transformer)
 
-    def forward(self, sentences, image_sequences):
+    def forward(self, sentences, image_sequences, tgt_mask=None):
         return self.transformer(
-            sentences.permute(1, 0, 2),
-            image_sequences.permute(1, 0, 2),
+            sentences.permute(1, 0, 2), image_sequences.permute(1, 0, 2), tgt_mask=None
         ).permute(1, 0, 2)
 
 
@@ -325,6 +324,24 @@ class TransformerDecoderClassifier(nn.Module):
         return classification_token
 
 
+def subsequent_mask_like(sequence):
+    mask = (
+        (
+            torch.triu(
+                torch.ones_like(sequence[0])[:, None]
+                .expand(sequence.shape[1], sequence.shape[1])
+                .long(),
+                diagonal=0,
+            )
+            == 1
+        )
+        .transpose(0, 1)
+        .float()
+    )
+    mask = mask.masked_fill(mask == 0, float("-inf")).masked_fill(mask == 1, float(0.0))
+    return mask
+
+
 class TransformerSequenceDecoder(nn.Module):
     def __init__(
         self,
@@ -365,6 +382,7 @@ class TransformerSequenceDecoder(nn.Module):
         return self.transformer(
             input_sequence,
             output_sequence,
+            tgt_mask=subsequent_mask_like(output_sequence[..., 0]),
         )
 
 
@@ -407,24 +425,6 @@ class TransformerSentenceImageSequenceModel(nn.Module):
         )
 
         return output_seq.unflatten(0, (batch_size, seq_len))
-
-
-def subsequent_mask_like(sequence):
-    mask = (
-        (
-            torch.triu(
-                torch.ones_like(sequence[0])[:, None]
-                .expand(sequence.shape[1], sequence.shape[1])
-                .long(),
-                diagonal=0,
-            )
-            == 1
-        )
-        .transpose(0, 1)
-        .float()
-    )
-    mask = mask.masked_fill(mask == 0, float("-inf")).masked_fill(mask == 1, float(0.0))
-    return mask
 
 
 class ActorCriticHead(nn.Module):
