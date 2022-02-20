@@ -325,6 +325,70 @@ class TransformerDecoderClassifier(nn.Module):
         return classification_token
 
 
+class TransformerSequenceDecoder(nn.Module):
+    def __init__(
+        self,
+        hidden_dim,
+        obs_nheads,
+        n_encoder_layers,
+        n_decoder_layers,
+        dropout=0,
+        fixup=False,
+    ):
+        super().__init__()
+        self.transformer = TransformerModel(
+            hidden_dim,
+            obs_nheads,
+            n_encoder_layers,
+            n_decoder_layers,
+            dropout=dropout,
+            fixup=fixup,
+        )
+        self.output_start_token = nn.Parameter(torch.randn(hidden_dim))
+
+    def forward(self, input_sequence, output_sequence):
+        # Output embeddings
+        #
+        # The decoder input sequence is the action at the previous
+        # timestep (either autoregressive or ground truth). For the first
+        # token we have a special token indicating the beginning of the sequence.
+        output_sequence = torch.cat(
+            [
+                self.output_start_token[None, None].expand(
+                    output_sequence.shape[0], 1, self.output_start_token.shape[0]
+                ),
+                output_sequence[:, :-1],
+            ],
+            dim=1,
+        )
+
+        return self.transformer(
+            input_sequence,
+            output_sequence,
+        )
+
+
+def transformer_flatten_image_sentence_sequences(sentence, image_sequence):
+    batch_size, seq_len, width, height, features = image_sequence.shape
+
+    # Reshape image_sequences so that the transformer is just processing one big
+    # batch and doesn't have to care about the sequence dimension
+    image_sequence = image_sequence.reshape(
+        batch_size * seq_len, width, height, features
+    )
+    sentence = sentence.repeat_interleave(seq_len, dim=0)
+
+    image_sequences_embeddings = image_sequence
+    sentences_embeddings = sentence
+
+    # Flatten sequences
+    image_sequences_embeddings = image_sequences_embeddings.reshape(
+        batch_size * seq_len, width * height, -1
+    )
+
+    return sentences_embeddings, image_sequences_embeddings
+
+
 class TransformerSentenceImageSequenceModel(nn.Module):
     def __init__(self, transformer_model):
         super().__init__()
@@ -333,20 +397,10 @@ class TransformerSentenceImageSequenceModel(nn.Module):
     def forward(self, sentence, image_sequence):
         batch_size, seq_len, width, height, features = image_sequence.shape
 
-        # Reshape image_sequences so that the transformer is just processing one big
-        # batch and doesn't have to care about the sequence dimension
-        image_sequence = image_sequence.reshape(
-            batch_size * seq_len, width, height, features
-        )
-        sentence = sentence.repeat_interleave(seq_len, dim=0)
-
-        image_sequences_embeddings = image_sequence
-        sentences_embeddings = sentence
-
-        # Flatten sequences
-        image_sequences_embeddings = image_sequences_embeddings.reshape(
-            batch_size * seq_len, width * height, -1
-        )
+        (
+            sentences_embeddings,
+            image_sequences_embeddings,
+        ) = transformer_flatten_image_sentence_sequences(sentence, image_sequence)
 
         output_seq = self.transformer_model(
             sentences_embeddings, image_sequences_embeddings
@@ -371,114 +425,6 @@ def subsequent_mask_like(sequence):
     )
     mask = mask.masked_fill(mask == 0, float("-inf")).masked_fill(mask == 1, float(0.0))
     return mask
-
-
-class CrossModalAutoregressiveTransformer(nn.Module):
-    """A transformer which uses causal masking on the outputs.
-
-    This should probably be put in another file.
-    """
-
-    def __init__(
-        self,
-        hidden_dim,
-        obs_nheads,
-        n_encoder_layers,
-        n_decoder_layers,
-        dropout=0,
-        fixup=False,
-    ):
-        super().__init__()
-        self.hidden_dim = hidden_dim
-        self.output_start_token = nn.Parameter(torch.randn(self.hidden_dim))
-
-        if fixup:
-            encoder_layer = TransformerEncoderLayerNoNorm
-            decoder_layer = TransformerDecoderLayerNoNorm
-        else:
-            encoder_layer = nn.TransformerEncoderLayer
-            decoder_layer = nn.TransformerDecoderLayer
-
-        self.transformer = nn.Transformer(
-            d_model=self.hidden_dim,
-            dim_feedforward=self.hidden_dim,
-            nhead=obs_nheads,
-            custom_encoder=nn.TransformerEncoder(
-                encoder_layer(
-                    self.hidden_dim, obs_nheads, self.hidden_dim * 2, dropout
-                ),
-                n_encoder_layers,
-            ),
-            custom_decoder=nn.TransformerDecoder(
-                decoder_layer(
-                    self.hidden_dim, obs_nheads, self.hidden_dim * 2, dropout
-                ),
-                n_decoder_layers,
-            ),
-            dropout=0,
-        )
-
-        if fixup:
-            fixup_embedding_init(self.word_embeddings.weight, n_decoder_layers)
-            fixup_embedding_init(self.img_embeddings.embedding.weight, n_decoder_layers)
-            fixup_transformer(self.transformer)
-
-    def forward(self, sentences, image_sequences, output_sequence):
-        batch_size, seq_len, width, height, features = image_sequences.shape
-
-        sentences = sentences[:, None].expand(
-            sentences.shape[0], seq_len, sentences.shape[-2], sentences.shape[-1]
-        )
-
-        image_sequences_embeddings = image_sequences
-        sentences_embeddings = sentences
-
-        flattened_image_sequences_embeddings = image_sequences_embeddings.flatten(
-            -3, -2
-        )
-
-        # Concatenate along sequence dimension
-        input_embeddings = torch.cat(
-            [sentences_embeddings, flattened_image_sequences_embeddings], dim=-2
-        )
-
-        # Output embeddings
-        #
-        # The decoder input sequence is the action at the previous
-        # timestep (either autoregressive or ground truth). For the first
-        # token we have a special token indicating the beginning of the sequence.
-        output_embeddings = torch.cat(
-            [
-                self.output_start_token[None, None].expand(
-                    batch_size, 1, self.hidden_dim
-                ),
-                output_sequence[:, :-1],
-            ],
-            dim=1,
-        )
-        output_embeddings = (
-            output_embeddings[:, :, None]
-            .expand(
-                output_embeddings.shape[0],
-                output_embeddings.shape[1],
-                output_embeddings.shape[1],
-                output_embeddings.shape[2],
-            )
-            .view(-1, output_embeddings.shape[1], output_embeddings.shape[2])
-        )
-
-        tgt_mask = subsequent_mask_like(output_sequence[..., 0])
-
-        y = self.transformer(
-            input_embeddings.flatten(0, -3).permute(1, 0, 2),
-            output_embeddings.permute(1, 0, 2),
-            tgt_mask=tgt_mask,
-        ).permute(1, 0, 2)
-
-        # Compute the targets
-        #
-        # Returns B x S x S_O x H
-        return y.view(batch_size, seq_len, y.shape[-2], -1)
 
 
 class ActorCriticHead(nn.Module):
