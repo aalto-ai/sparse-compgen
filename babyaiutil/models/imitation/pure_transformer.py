@@ -183,7 +183,6 @@ class TransformerModel(nn.Module):
         self.word_embeddings = nn.Embedding(vocabulary_size, self.hidden_dim)
         self.img_pos_encoding = PositionalEncoding2D(self.hidden_dim)
         self.word_pos_encoding = PositionalEncoding1D(self.hidden_dim)
-        self.direction_embedding = nn.Embedding(4, embedding_size)
 
         if fixup:
             encoder_layer = TransformerEncoderLayerNoNorm
@@ -217,28 +216,13 @@ class TransformerModel(nn.Module):
             fixup_embedding_init(self.img_embeddings.embedding.weight, n_decoder_layers)
             fixup_transformer(self.transformer)
 
-    def forward(self, sentences, image_sequences, directions):
+    def forward(self, sentences, image_sequences):
         batch_size, seq_len, width, height, features = image_sequences.shape
 
         # Reshape image_sequences so that the transformer is just processing one big
         # batch and doesn't have to care about the sequence dimension
-        # Include the direction that the agent is facing as an extra state value
-        # image_sequences = torch.cat(
-        #     [
-        #         image_sequences,
-        #         directions[:, :, None, None, None].expand(
-        #             batch_size, seq_len, width, height, 1
-        #         ),
-        #     ],
-        #     dim=-1,
-        # )
-        # Reshape image_sequences so that the transformer is just processing one big
-        # batch and doesn't have to care about the sequence dimension
         image_sequences = image_sequences.reshape(
             batch_size * seq_len, width, height, features
-        )
-        directions_embeddings = self.direction_embedding(directions.long()).reshape(
-            batch_size * seq_len, -1
         )
         sentences = sentences.repeat_interleave(seq_len, dim=0)
 
@@ -283,9 +267,7 @@ class TransformerModel(nn.Module):
         # We take the very last token
         classification_token = y[:, -1, :]
 
-        classification_token_with_embeddings = torch.cat(
-            [classification_token, directions_embeddings], dim=-1
-        )
+        return classification_token.reshape(batch_size, seq_len, -1)
 
 
 class ActorCriticHead(nn.Module):
@@ -304,6 +286,42 @@ class ActorCriticHead(nn.Module):
 
     def forward(self, x):
         return (self.actor(x), self.critic(x))
+
+
+class TransformerModelWithDirection(nn.Module):
+    def __init__(
+        self,
+        vocabulary_size,
+        embedding_size,
+        n_components,
+        obs_nheads,
+        n_encoder_layers,
+        n_decoder_layers,
+        dropout=0,
+        fixup=False,
+    ):
+        super().__init__()
+        self.transformer = TransformerModel(
+            vocabulary_size,
+            embedding_size,
+            n_components,
+            obs_nheads,
+            n_encoder_layers,
+            n_decoder_layers,
+            dropout=dropout,
+            fixup=fixup,
+        )
+        self.direction_embedding = nn.Embedding(4, embedding_size)
+
+    def forward(self, sentences, image_sequences, directions):
+        directions_embeddings = self.direction_embedding(directions.long())
+        transformer_decoder_embedding = self.transformer(sentences, image_sequences)
+
+        classification_token_with_embeddings = torch.cat(
+            [transformer_decoder_embedding, directions_embeddings], dim=-1
+        )
+
+        return classification_token_with_embeddings
 
 
 def linear_with_warmup_schedule(
@@ -337,7 +355,15 @@ def linear_with_warmup_schedule(
 class PureTransformerImitationLearningHarness(ImitationLearningHarness):
     def __init__(self, lr=10e-4, entropy_bonus=10e-3):
         super().__init__(lr=lr, entropy_bonus=entropy_bonus)
-        self.policy_model = TransformerModel(32, 32, 4, 1, 4, 7, fixup=False)
+        self.policy_model = TransformerModelWithDirection(
+            vocabulary_size=32,
+            embedding_size=32,
+            n_components=3,
+            obs_nheads=4,
+            n_encoder_layers=1,
+            n_decoder_layers=4,
+            fixup=False,
+        )
         self.ac_head = ActorCriticHead(32 * 4, 7)
 
     def configure_optimizers(self):
