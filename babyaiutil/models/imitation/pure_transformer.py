@@ -168,6 +168,7 @@ class TransformerModel(nn.Module):
         self,
         vocabulary_size,
         embedding_size,
+        n_components,
         obs_nheads,
         n_encoder_layers,
         n_decoder_layers,
@@ -176,8 +177,10 @@ class TransformerModel(nn.Module):
         fixup=False,
     ):
         super().__init__()
-        self.img_embeddings = ImageBOWEmbedding(16, 3, embedding_size)
-        self.hidden_dim = embedding_size * 3
+        self.img_embeddings = ImageBOWEmbedding(
+            vocabulary_size, n_components, embedding_size
+        )
+        self.hidden_dim = embedding_size * n_components
         self.word_embeddings = nn.Embedding(vocabulary_size, self.hidden_dim)
         self.img_pos_encoding = PositionalEncoding2D(self.hidden_dim)
         self.word_pos_encoding = PositionalEncoding1D(self.hidden_dim)
