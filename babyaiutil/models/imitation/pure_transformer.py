@@ -172,7 +172,6 @@ class TransformerModel(nn.Module):
         obs_nheads,
         n_encoder_layers,
         n_decoder_layers,
-        n_actions,
         dropout=0,
         fixup=False,
     ):
@@ -210,16 +209,6 @@ class TransformerModel(nn.Module):
                 n_decoder_layers,
             ),
             dropout=0,
-        )
-        self.actor = nn.Sequential(
-            nn.Linear(self.hidden_dim + embedding_size, embedding_size * 4, bias=False),
-            nn.ReLU(),
-            nn.Linear(embedding_size * 4, n_actions, bias=False),
-        )
-        self.critic = nn.Sequential(
-            nn.Linear(self.hidden_dim + embedding_size, embedding_size * 4, bias=False),
-            nn.ReLU(),
-            nn.Linear(embedding_size * 4, n_actions, bias=False),
         )
         self.final_image_sequence_token = nn.Parameter(torch.randn(self.hidden_dim))
 
@@ -298,14 +287,23 @@ class TransformerModel(nn.Module):
             [classification_token, directions_embeddings], dim=-1
         )
 
-        return (
-            self.actor(classification_token_with_embeddings).reshape(
-                batch_size, seq_len, -1
-            ),
-            self.critic(classification_token_with_embeddings).reshape(
-                batch_size, seq_len, -1
-            ),
+
+class ActorCriticHead(nn.Module):
+    def __init__(self, hidden_dim, n_actions):
+        super().__init__()
+        self.actor = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim * 4, bias=False),
+            nn.ReLU(),
+            nn.Linear(hidden_dim * 4, n_actions, bias=False),
         )
+        self.critic = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim * 4, bias=False),
+            nn.ReLU(),
+            nn.Linear(hidden_dim * 4, n_actions, bias=False),
+        )
+
+    def forward(self, x):
+        return (self.actor(x), self.critic(x))
 
 
 def linear_with_warmup_schedule(
@@ -340,6 +338,7 @@ class PureTransformerImitationLearningHarness(ImitationLearningHarness):
     def __init__(self, lr=10e-4, entropy_bonus=10e-3):
         super().__init__(lr=lr, entropy_bonus=entropy_bonus)
         self.policy_model = TransformerModel(32, 32, 4, 1, 4, 7, fixup=False)
+        self.ac_head = ActorCriticHead(32 * 4, 7)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
@@ -356,4 +355,4 @@ class PureTransformerImitationLearningHarness(ImitationLearningHarness):
 
     def forward(self, x):
         mission, images_path, directions_path = x
-        return self.policy_model(mission, images_path, directions_path)
+        return self.ac_head(self.policy_model(mission, images_path, directions_path))
