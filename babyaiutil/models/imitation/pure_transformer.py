@@ -53,14 +53,16 @@ class ImageBOWEmbedding(nn.Module):
         self.apply(initialize_parameters)
 
     def forward(self, inputs):
+        flat_inputs = inputs.flatten(0, -4)
+
         offsets = torch.Tensor([i * self.max_value for i in range(self.n_channels)]).to(
             inputs.device
         )
-        offsetted = (inputs + offsets[None, None, None, :]).long()
+        offsetted = (flat_inputs + offsets[None, None, None, :]).long()
         each_embedding = self.embedding(offsetted)
         each_embedding_flat = each_embedding.reshape(*each_embedding.shape[:-2], -1)
 
-        return each_embedding_flat.permute(0, 3, 1, 2)
+        return each_embedding_flat.unflatten(0, inputs.shape[:-3])
 
 
 class TransformerEncoderLayerNoNorm(nn.Module):
