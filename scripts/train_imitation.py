@@ -27,15 +27,15 @@ from babyaiutil.models.imitation.baseline import ACModelImitationLearningHarness
 from babyaiutil.models.imitation.conv_transformer import (
     ConvTransformerImitationLearningHarness,
 )
-from babyaiutil.models.imitation.pure_transformer import (
-    PureTransformerImitationLearningHarness,
+from babyaiutil.models.imitation.sentence_encoder_image_decoder_transformer import (
+    SentenceEncoderImageNSDecoderImageImitationLearningHarness,
 )
 
 
 MODELS = {
     "film_lstm_policy": ACModelImitationLearningHarness,
     "conv_transformer": ConvTransformerImitationLearningHarness,
-    "pure_transformer": PureTransformerImitationLearningHarness,
+    "sentence_encoder_image_decoder": SentenceEncoderImageNSDecoderImageImitationLearningHarness,
 }
 
 
