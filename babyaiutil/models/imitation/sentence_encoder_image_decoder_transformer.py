@@ -55,7 +55,7 @@ class TransformerSentenceImageSequenceModel(nn.Module):
         return output_seq.unflatten(0, (batch_size, seq_len))
 
 
-class PureTransformerImitationLearningHarness(ImitationLearningHarness):
+class SentenceEncoderImageNSDecoderImageImitationLearningHarness(ImitationLearningHarness):
     def __init__(self, lr=10e-4, entropy_bonus=10e-3):
         super().__init__(lr=lr, entropy_bonus=entropy_bonus)
         self.sequence_encoders = SequenceEncoderTuple(
