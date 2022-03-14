@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from .harness import ImitationLearningHarness
 
+from ..common.add_aux import AddAuxLayer
 from .common.ac_head import ActorCriticHead
 from .transformer.classifier_decoder_variant import TransformerDecoderClassifier
 from .transformer.schedule import linear_with_warmup_schedule
@@ -54,27 +55,6 @@ class TransformerSentenceImageSequenceModel(nn.Module):
         return output_seq.unflatten(0, (batch_size, seq_len))
 
 
-class ResidualAddAuxLayer(nn.Module):
-    def __init__(self, input_dim, aux_dim):
-        super().__init__()
-        self.project = nn.Linear(aux_dim, input_dim)
-        self.combine = nn.Linear(input_dim * 2, input_dim)
-
-    def forward(self, x, aux):
-        # Expand aux so that dims are the same as x
-        # we assume that aux and x both have batch
-        # dims
-        aux = self.project(aux)[
-            tuple(
-                [slice(None, None)]
-                + [None] * (x.dim() - aux.dim())
-                + [slice(None, None)]
-            )
-        ].expand_as(x)
-
-        return self.combine(torch.cat([x, aux], dim=-1))
-
-
 class PureTransformerImitationLearningHarness(ImitationLearningHarness):
     def __init__(self, lr=10e-4, entropy_bonus=10e-3):
         super().__init__(lr=lr, entropy_bonus=entropy_bonus)
@@ -92,7 +72,7 @@ class PureTransformerImitationLearningHarness(ImitationLearningHarness):
                 fixup=False,
             )
         )
-        self.direction_aux = ResidualAddAuxLayer(3 * 32, 32)
+        self.direction_aux = AddAuxLayer(3 * 32, 32)
         self.ac_head = ActorCriticHead(32 * 3, 7)
 
     def configure_optimizers(self):
