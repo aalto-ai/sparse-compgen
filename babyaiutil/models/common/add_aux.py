@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class AddAuxLayer(nn.Module):
     def __init__(self, input_dim, aux_dim):
         super().__init__()
