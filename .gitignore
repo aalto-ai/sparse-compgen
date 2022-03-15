@@ -1,0 +1,6 @@
+venv*/
+*.egg*
+build/*
+*.pyc
+scripts/logs/*
+scripts/models/*
