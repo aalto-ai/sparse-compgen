@@ -56,5 +56,7 @@ class TransformerModel(nn.Module):
 
     def forward(self, sentences, image_sequences, tgt_mask=None):
         return self.transformer(
-            sentences.permute(1, 0, 2), image_sequences.permute(1, 0, 2), tgt_mask=tgt_mask
+            sentences.permute(1, 0, 2),
+            image_sequences.permute(1, 0, 2),
+            tgt_mask=tgt_mask,
         ).permute(1, 0, 2)
