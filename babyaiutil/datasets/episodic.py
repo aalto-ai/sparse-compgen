@@ -235,10 +235,14 @@ class ParallelEnv(gym.Env):
 def collect_experience_from_policy(
     parallel_env, policy_model, word2idx, seeds, device=None
 ):
+    requested_device = device
+
     def generate_experiences():
         first_parameter = next(policy_model.parameters())
-        device = getattr(first_parameter, "device", None) or "cpu"
+        initial_device = getattr(first_parameter, "device", None)
+        device = requested_device or initial_device or "cpu"
 
+        policy_model.to(device)
         policy_model.eval()
         parallel_env.reboot()
 
@@ -327,6 +331,7 @@ def collect_experience_from_policy(
             yield from successes
 
         parallel_env.shutdown()
+        policy_model.to(initial_device)
 
     return generate_experiences
 
