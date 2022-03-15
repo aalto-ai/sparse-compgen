@@ -74,7 +74,7 @@ def parser():
 
 
 def interactive_dataloader_from_seeds(
-    parallel_env, model, word2idx, dataset, batch_size
+    parallel_env, model, word2idx, dataset, batch_size, max_seq_len=1, device=None
 ):
     seeds = [
         dataset.seeds[i] for i in itertools.chain.from_iterable(dataset.groups_indices)
@@ -82,7 +82,7 @@ def interactive_dataloader_from_seeds(
     dataloader_il = DataLoader(
         FuncIterableDataset(
             collect_experience_from_policy(
-                parallel_env, model, word2idx, seeds, batch_size
+                parallel_env, model, word2idx, seeds, max_seq_len=max_seq_len, device=device
             ),
             len(seeds),
         ),
@@ -90,6 +90,10 @@ def interactive_dataloader_from_seeds(
     )
 
     return dataloader_il
+
+
+def select_device():
+    return "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def do_experiment(args):
@@ -137,15 +141,16 @@ def do_experiment(args):
 
     pl.seed_everything(args.seed)
     model = MODELS[args.model](lr=1e-3)
+    validation_device = select_device()
 
     train_dataloader = DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True
     )
     val_id_dataloader_il = interactive_dataloader_from_seeds(
-        parallel_env, model, word2idx, valid_dataset_id, 64
+        parallel_env, model, word2idx, valid_dataset_id, 64, max_seq_len=1, device=validation_device
     )
     val_ood_dataloader_il = interactive_dataloader_from_seeds(
-        parallel_env, model, word2idx, valid_dataset_ood, 64
+        parallel_env, model, word2idx, valid_dataset_ood, 64, max_seq_len=1, device=validation_device
     )
 
     check_val_opts = {}
