@@ -30,12 +30,16 @@ from babyaiutil.models.imitation.conv_transformer import (
 from babyaiutil.models.imitation.sentence_encoder_image_decoder_transformer import (
     SentenceEncoderImageNSDecoderImageImitationLearningHarness,
 )
+from babyaiutil.models.imitation.fused_inputs_next_step_encoder_transformer import (
+    FusedInputsNextStepTransformerEncoderHarness,
+)
 
 
 MODELS = {
     "film_lstm_policy": ACModelImitationLearningHarness,
     "conv_transformer": ConvTransformerImitationLearningHarness,
     "sentence_encoder_image_decoder": SentenceEncoderImageNSDecoderImageImitationLearningHarness,
+    "fused_inputs_next_step_encoder": FusedInputsNextStepTransformerEncoderHarness,
 }
 
 
