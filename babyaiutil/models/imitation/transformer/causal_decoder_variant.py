@@ -1,5 +1,5 @@
 import torch
-import torch.nn
+import torch.nn as nn
 
 from .core_transformer import TransformerModel
 
