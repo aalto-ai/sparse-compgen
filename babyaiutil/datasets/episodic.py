@@ -233,7 +233,7 @@ class ParallelEnv(gym.Env):
 
 
 def collect_experience_from_policy(
-    parallel_env, policy_model, word2idx, seeds, device=None
+    parallel_env, policy_model, word2idx, seeds, max_seq_len=16, device=None
 ):
     requested_device = device
 
@@ -254,12 +254,16 @@ def collect_experience_from_policy(
             all_initial_obs = parallel_env.reset()[: len(remaining_seeds_batch)]
 
             all_images = torch.tensor(
-                np.stack([initial_obs["image"] for initial_obs in all_initial_obs]),
+                np.stack([initial_obs["image"] for initial_obs in all_initial_obs])[
+                    :, None
+                ],
                 dtype=torch.long,
                 device=device,
             )
             all_directions = torch.tensor(
-                np.array([initial_obs["direction"] for initial_obs in all_initial_obs]),
+                np.array([initial_obs["direction"] for initial_obs in all_initial_obs])[
+                    :, None
+                ],
                 dtype=torch.long,
                 device=device,
             )
@@ -273,39 +277,57 @@ def collect_experience_from_policy(
                 dtype=torch.long,
                 device=device,
             )
-            all_dones = np.array([False for env in remaining_seeds_batch])
+            step_dones = np.array([False for env in remaining_seeds_batch])
 
             recorded_rewards = []
             recorded_dones = []
             recorded_actions = []
 
             with torch.no_grad():
-                while not all_dones.all():
+                while not step_dones.all():
                     # In parallel, get the logits from the model
-                    all_act_logits, _ = policy_model(
-                        (all_missions, all_images[:, None], all_directions[:, None])
+                    step_act_logits, _ = policy_model(
+                        (all_missions, all_images, all_directions)
                     )[:2]
-                    all_act_logits = all_act_logits.reshape(all_act_logits.shape[0], -1)
-                    all_actions = all_act_logits.max(dim=-1)[1].detach().cpu().numpy()
-
-                    all_obs, all_rewards, all_dones, _ = list(
-                        zip(*parallel_env.step(all_actions))
+                    step_act_logits = step_act_logits.reshape(
+                        step_act_logits.shape[0], -1
                     )
-                    all_images = np.stack([o["image"] for o in all_obs])
-                    all_directions = np.array([o["direction"] for o in all_obs])
-                    all_rewards = np.array(all_rewards)
-                    all_dones = np.array(all_dones)
+                    step_actions = step_act_logits.max(dim=-1)[1].detach().cpu().numpy()
 
-                    recorded_rewards.append(all_rewards)
-                    recorded_dones.append(all_dones)
-                    recorded_actions.append(all_actions)
+                    step_obs, step_rewards, step_dones, _ = list(
+                        zip(*parallel_env.step(step_actions))
+                    )
 
-                    all_images = torch.tensor(
-                        all_images, dtype=torch.long, device=device
-                    )
-                    all_directions = torch.tensor(
-                        all_directions, dtype=torch.long, device=device
-                    )
+                    step_rewards = np.array(step_rewards)
+                    step_dones = np.array(step_dones)
+
+                    # Concatenate new observations
+                    all_images = torch.cat(
+                        [
+                            all_images,
+                            torch.tensor(
+                                np.stack([o["image"] for o in step_obs])[:, None],
+                                dtype=torch.long,
+                                device=device,
+                            ),
+                        ],
+                        dim=1,
+                    )[:, -max_seq_len:]
+                    all_directions = torch.cat(
+                        [
+                            all_directions,
+                            torch.tensor(
+                                np.stack([o["direction"] for o in step_obs])[:, None],
+                                dtype=torch.long,
+                                device=device,
+                            ),
+                        ],
+                        dim=1,
+                    )[:, -max_seq_len:]
+
+                    recorded_rewards.append(step_rewards)
+                    recorded_dones.append(step_dones)
+                    recorded_actions.append(step_actions)
 
             # Finished acting in environment, iterate over the rewards
             # we can ignore the other stuff now
