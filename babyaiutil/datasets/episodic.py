@@ -289,7 +289,8 @@ def collect_experience_from_policy(
                     step_act_logits, _ = policy_model(
                         (all_missions, all_images, all_directions)
                     )[:2]
-                    step_act_logits = step_act_logits.reshape(
+                    # We only take the last predicted action and ignore the rest
+                    step_act_logits = step_act_logits[:, -1].reshape(
                         step_act_logits.shape[0], -1
                     )
                     step_actions = step_act_logits.max(dim=-1)[1].detach().cpu().numpy()
