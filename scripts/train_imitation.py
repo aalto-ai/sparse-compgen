@@ -33,6 +33,9 @@ from babyaiutil.models.imitation.sentence_encoder_image_decoder_transformer impo
 from babyaiutil.models.imitation.fused_inputs_next_step_encoder_transformer import (
     FusedInputsNextStepTransformerEncoderHarness,
 )
+from babyaiutil.models.imitation.fused_inputs_autoregressive_transformer import (
+    FusedInputsAutoregressiveTransformerHarness,
+)
 
 
 MODELS = {
@@ -40,6 +43,11 @@ MODELS = {
     "conv_transformer": ConvTransformerImitationLearningHarness,
     "sentence_encoder_image_decoder": SentenceEncoderImageNSDecoderImageImitationLearningHarness,
     "fused_inputs_next_step_encoder": FusedInputsNextStepTransformerEncoderHarness,
+    "fused_inputs_autoregressive_transformer": FusedInputsAutoregressiveTransformerHarness
+}
+
+ACCUM_SEQ_LENGTHS = {
+    "fused_inputs_autoregressive_transformer": 16
 }
 
 
@@ -142,15 +150,16 @@ def do_experiment(args):
     pl.seed_everything(args.seed)
     model = MODELS[args.model](lr=1e-3)
     validation_device = select_device()
+    max_seq_len = ACCUM_SEQ_LENGTHS.get(args.model, 1)
 
     train_dataloader = DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True
     )
     val_id_dataloader_il = interactive_dataloader_from_seeds(
-        parallel_env, model, word2idx, valid_dataset_id, 64, max_seq_len=1, device=validation_device
+        parallel_env, model, word2idx, valid_dataset_id, 64, max_seq_len=max_seq_len, device=validation_device
     )
     val_ood_dataloader_il = interactive_dataloader_from_seeds(
-        parallel_env, model, word2idx, valid_dataset_ood, 64, max_seq_len=1, device=validation_device
+        parallel_env, model, word2idx, valid_dataset_ood, 64, max_seq_len=max_seq_len, device=validation_device
     )
 
     check_val_opts = {}
