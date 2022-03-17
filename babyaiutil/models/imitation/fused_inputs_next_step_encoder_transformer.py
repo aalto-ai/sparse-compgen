@@ -36,26 +36,6 @@ def transformer_flatten_image_sentence_sequences(sentence, image_sequence):
     return sentences_embeddings, image_sequences_embeddings
 
 
-class TransformerSentenceImageSequenceModel(nn.Module):
-    def __init__(self, transformer_model):
-        super().__init__()
-        self.transformer_model = transformer_model
-
-    def forward(self, sentence, image_sequence):
-        batch_size, seq_len, width, height, features = image_sequence.shape
-
-        (
-            sentences_embeddings,
-            image_sequences_embeddings,
-        ) = transformer_flatten_image_sentence_sequences(sentence, image_sequence)
-
-        output_seq = self.transformer_model(
-            sentences_embeddings, image_sequences_embeddings
-        )
-
-        return output_seq.unflatten(0, (batch_size, seq_len))
-
-
 class FusedInputsNextStepTransformerEncoderHarness(ImitationLearningHarness):
     def __init__(self, lr=10e-4, entropy_bonus=10e-3):
         super().__init__(lr=lr, entropy_bonus=entropy_bonus, optimizer_config_func=transformer_optimizer_config)
