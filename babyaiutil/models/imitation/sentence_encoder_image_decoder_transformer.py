@@ -91,7 +91,7 @@ class SentenceEncoderImageNSDecoderImageImitationLearningHarness(
         }
 
     def forward(self, x):
-        mission, images_path, directions_path = x
+        mission, images_path, directions_path, past_actions = x
         encoded_mission, encoded_images, encoded_directions = self.sequence_encoders(
             mission, images_path, directions_path
         )
