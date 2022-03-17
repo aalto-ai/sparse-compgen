@@ -6,7 +6,7 @@ from .harness import ImitationLearningHarness
 from ..common.add_aux import AddAuxLayer
 from .common.ac_head import ActorCriticHead
 from .transformer.classifier_decoder_variant import TransformerDecoderClassifier
-from .transformer.schedule import linear_with_warmup_schedule
+from .transformer.optimizer_config import transformer_optimizer_config
 from .transformer.sequence_embedding import (
     SequenceEncoderTuple,
     make_sentence_encoder,
@@ -59,7 +59,7 @@ class SentenceEncoderImageNSDecoderImageImitationLearningHarness(
     ImitationLearningHarness
 ):
     def __init__(self, lr=10e-4, entropy_bonus=10e-3):
-        super().__init__(lr=lr, entropy_bonus=entropy_bonus)
+        super().__init__(lr=lr, entropy_bonus=entropy_bonus, optimizer_config_func=transformer_optimizer_config)
         self.sequence_encoders = SequenceEncoderTuple(
             make_sentence_encoder(vocab_size=32, emb_dim=32 * 3),
             make_disentangled_image_encoder(vocab_size=32, n_components=3, emb_dim=32),
@@ -76,19 +76,6 @@ class SentenceEncoderImageNSDecoderImageImitationLearningHarness(
         )
         self.direction_aux = AddAuxLayer(3 * 32, 32)
         self.ac_head = ActorCriticHead(32 * 3, 7)
-
-    def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
-        return {
-            "optimizer": optimizer,
-            "lr_scheduler": {
-                "scheduler": linear_with_warmup_schedule(
-                    optimizer, 10000, self.trainer.max_steps, -2
-                ),
-                "interval": "step",
-                "frequency": 1,
-            },
-        }
 
     def forward(self, x):
         mission, images_path, directions_path, past_actions = x
