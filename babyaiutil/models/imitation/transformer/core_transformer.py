@@ -54,9 +54,10 @@ class TransformerModel(nn.Module):
             fixup_embedding_init(self.img_embeddings.embedding.weight, n_decoder_layers)
             fixup_transformer(self.transformer)
 
-    def forward(self, sentences, image_sequences, tgt_mask=None):
+    def forward(self, sentences, image_sequences, tgt_mask=None, memory_mask=False):
         return self.transformer(
             sentences.permute(1, 0, 2),
             image_sequences.permute(1, 0, 2),
             tgt_mask=tgt_mask,
+            memory_mask=memory_mask,
         ).permute(1, 0, 2)
