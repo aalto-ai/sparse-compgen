@@ -175,8 +175,8 @@ def do_experiment(args):
     trainer = pl.Trainer(
         callbacks=[pl.callbacks.LearningRateMonitor()],
         max_steps=args.iterations,
-        gpus=1,
-        precision=16,
+        gpus=1 if torch.cuda.is_available() else 0,
+        precision=16 if torch.cuda.is_available else None,
         default_root_dir=f"logs/{model_dir}/{exp_name}",
         accumulate_grad_batches=1,
         enable_progress_bar=sys.stdout.isatty(),
