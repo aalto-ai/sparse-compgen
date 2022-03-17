@@ -143,7 +143,7 @@ class ACModel(nn.Module):
         # Initialize parameters correctly
         self.apply(initialize_parameters)
 
-    def forward(self, mission, images_path, directions_path):
+    def forward(self, mission, images_path, directions_path, past_actions=None):
         mission_s = mission.transpose(0, 1)
         mission_words = self.word_embeddings(mission_s)
         mission_enc = (
@@ -205,5 +205,5 @@ class ACModelImitationLearningHarness(ImitationLearningHarness):
         self.policy_model = ACModel(7)
 
     def forward(self, x):
-        mission, images_path, directions_path = x
+        mission, images_path, directions_path, past_actions = x
         return self.policy_model(mission, images_path, directions_path)
