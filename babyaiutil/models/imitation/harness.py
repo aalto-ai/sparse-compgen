@@ -51,8 +51,9 @@ class ImitationLearningHarness(pl.LightningModule):
         seeds, mission, images_path, directions_path, taken_actions, returns, masks = x
         bool_masks = masks.bool()
 
+        past_actions = (taken_actions * (taken_actions != -1))[:, :-1]
         policy_logits, critic_values = self.forward(
-            (mission, images_path, directions_path)
+            (mission, images_path, directions_path, past_actions)
         )
 
         loss = compute_imitation_loss(
