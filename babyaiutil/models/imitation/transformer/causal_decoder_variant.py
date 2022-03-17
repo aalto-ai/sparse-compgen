@@ -54,7 +54,7 @@ class TransformerSequenceDecoder(nn.Module):
                 self.output_start_token[None, None].expand(
                     output_sequence.shape[0], 1, self.output_start_token.shape[0]
                 ),
-                output_sequence[:, :-1],
+                output_sequence,
             ],
             dim=1,
         )
