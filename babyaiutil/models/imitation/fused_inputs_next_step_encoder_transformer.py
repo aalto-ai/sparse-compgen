@@ -57,7 +57,7 @@ class FusedInputsNextStepTransformerEncoderHarness(ImitationLearningHarness):
         mission, images_path, directions_path, past_actions = x
         batch_size, seq_len = images_path.shape[:2]
         encoded_mission, encoded_images, encoded_directions = self.sequence_encoders(
-            mission, images_path, directions_path, past_actions
+            mission, images_path, directions_path
         )
         # Flatten HW and BS dimensions
         encoded_images = encoded_images.flatten(-3, -2).flatten(0, 1)
