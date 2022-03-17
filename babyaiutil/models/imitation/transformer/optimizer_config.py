@@ -4,7 +4,7 @@ from .schedule import linear_with_warmup_schedule
 
 
 def transformer_optimizer_config(harness, lr):
-    optimizer = torch.optim.Adam(harness.parameters(), lr=lr)
+    optimizer = optim.Adam(harness.parameters(), lr=lr)
     return {
         "optimizer": optimizer,
         "lr_scheduler": {
