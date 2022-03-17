@@ -62,6 +62,9 @@ class TransformerSequenceDecoder(nn.Module):
         return self.transformer(
             input_sequence,
             output_sequence,
+            src_mask=subsequent_mask_like(input_sequence[..., 0])
+            if causal_input
+            else None,
             tgt_mask=subsequent_mask_like(output_sequence[..., 0]),
             memory_mask=subsequent_mask_like(output_sequence[..., 0])
             if causal_input
