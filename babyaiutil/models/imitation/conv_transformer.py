@@ -322,5 +322,5 @@ class ConvTransformerImitationLearningHarness(ImitationLearningHarness):
         self.policy_model = ConvTransformerModel(32, 128, 128, 8, 4, 7)
 
     def forward(self, x):
-        mission, images_path, directions_path = x
+        mission, images_path, directions_path, past_actions = x
         return self.policy_model(mission, images_path, directions_path)
