@@ -43,7 +43,7 @@ class TransformerSequenceDecoder(nn.Module):
         )
         self.output_start_token = nn.Parameter(torch.randn(hidden_dim))
 
-    def forward(self, input_sequence, output_sequence):
+    def forward(self, input_sequence, output_sequence, causal_input=False):
         # Output embeddings
         #
         # The decoder input sequence is the action at the previous
@@ -63,4 +63,7 @@ class TransformerSequenceDecoder(nn.Module):
             input_sequence,
             output_sequence,
             tgt_mask=subsequent_mask_like(output_sequence[..., 0]),
+            memory_mask=subsequent_mask_like(output_sequence[..., 0])
+            if causal_input
+            else None,
         )
