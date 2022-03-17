@@ -53,19 +53,6 @@ class FusedInputsNextStepTransformerEncoderHarness(ImitationLearningHarness):
         )
         self.ac_head = ActorCriticHead(32 * 3, 7)
 
-    def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
-        return {
-            "optimizer": optimizer,
-            "lr_scheduler": {
-                "scheduler": linear_with_warmup_schedule(
-                    optimizer, 10000, self.trainer.max_steps, -2
-                ),
-                "interval": "step",
-                "frequency": 1,
-            },
-        }
-
     def forward(self, x):
         mission, images_path, directions_path, past_actions = x
         batch_size, seq_len = images_path.shape[:2]
