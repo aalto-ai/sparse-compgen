@@ -253,6 +253,9 @@ def collect_experience_from_policy(
             parallel_env.seed(remaining_seeds_batch)
             all_initial_obs = parallel_env.reset()[: len(remaining_seeds_batch)]
 
+            past_actions = torch.zeros(
+                parallel_env.n_envs, 0, dtype=torch.long, device=device
+            )
             all_images = torch.tensor(
                 np.stack([initial_obs["image"] for initial_obs in all_initial_obs])[
                     :, None
@@ -287,7 +290,7 @@ def collect_experience_from_policy(
                 while not step_dones.all():
                     # In parallel, get the logits from the model
                     step_act_logits, _ = policy_model(
-                        (all_missions, all_images, all_directions)
+                        (all_missions, all_images, all_directions, past_actions)
                     )[:2]
                     # We only take the last predicted action and ignore the rest
                     step_act_logits = step_act_logits[:, -1].reshape(
@@ -325,6 +328,15 @@ def collect_experience_from_policy(
                         ],
                         dim=1,
                     )[:, -max_seq_len:]
+                    past_actions = torch.cat(
+                        [
+                            past_actions,
+                            torch.tensor(
+                                step_actions[:, None], dtype=torch.long, device=device
+                            ),
+                        ],
+                        dim=1,
+                    )[:, -(max_seq_len - 1) :]
 
                     recorded_rewards.append(step_rewards)
                     recorded_dones.append(step_dones)
