@@ -105,14 +105,14 @@ def worker(conn, env_name, index):
             raise NotImplementedError
 
 
-def create_proc_with_pipe(target_fn, args):
-    local, remote = Pipe()
+def create_proc_with_pipe(target_fn, existing_pipe, args):
+    local, remote = existing_pipe if existing_pipe is not None else Pipe()
+
     p = Process(target=target_fn, args=(remote, *args))
     p.daemon = True
     p.start()
-    remote.close()
 
-    return p, local
+    return p, local, remote
 
 
 class ParallelEnvMultiproc(gym.Env):
@@ -123,26 +123,26 @@ class ParallelEnvMultiproc(gym.Env):
 
         self.env_name = env_name
 
-        self.locals = []
+        self.pipes = []
         self.processes = []
         self.n_envs = n_envs
 
     def reset(self):
-        for local in self.locals:
+        for local, _ in self.pipes:
             local.send(("reset", None))
 
-        return [local.recv() for local in self.locals]
+        return [local.recv() for local, _ in self.pipes]
 
     def seed(self, seeds):
-        for local, seed in zip(self.locals, seeds):
+        for (local, _), seed in zip(self.pipes, seeds):
             local.send(("seed", seed))
 
     def step(self, actions):
-        for local, action in zip(self.locals, actions):
+        for (local, _), action in zip(self.pipes, actions):
             local.send(("step", action))
 
         # We might only interact with a subset
-        return [local.recv() for local, _ in zip(self.locals, actions)]
+        return [local.recv() for local, _ in self.pipes]
 
     def render(self):
         raise NotImplementedError
@@ -150,19 +150,24 @@ class ParallelEnvMultiproc(gym.Env):
     def shutdown(self):
         for p in self.processes:
             p.terminate()
-        for pipe in self.locals:
-            pipe.close()
-        self.locals = []
+
         self.processes = []
 
     def reboot(self):
         self.shutdown()
         for i in range(self.n_envs):
-            p, local = create_proc_with_pipe(worker, args=(self.env_name, i))
-            self.locals.append(local)
+            existing_pipe = self.pipes[i] if len(self.pipes) > i else None
+            p, local, remote = create_proc_with_pipe(worker, existing_pipe, args=(self.env_name, i))
+
+            if existing_pipe is None:
+                self.pipes.append((local, remote))
             self.processes.append(p)
 
     def __del__(self):
+        for local, remote in self.pipes:
+            local.close()
+            remote.close()
+
         self.shutdown()
 
 
