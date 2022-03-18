@@ -156,11 +156,7 @@ class ParallelEnvMultiproc(gym.Env):
         self.processes = []
 
     def reboot(self):
-        for p in self.processes:
-            p.terminate()
-
-        self.locals = []
-        self.processes = []
+        self.shutdown()
         for i in range(self.n_envs):
             p, local = create_proc_with_pipe(worker, args=(self.env_name, i))
             self.locals.append(local)
