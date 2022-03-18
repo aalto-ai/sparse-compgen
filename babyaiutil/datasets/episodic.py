@@ -101,6 +101,8 @@ def worker(conn, env_name, index):
             obs = correct_state_rotations(env.reset())
             done = False
             conn.send(obs)
+        elif cmd == "term":
+            break
         else:
             raise NotImplementedError
 
@@ -148,8 +150,9 @@ class ParallelEnvMultiproc(gym.Env):
         raise NotImplementedError
 
     def shutdown(self):
-        for p in self.processes:
-            p.terminate()
+        for p, (local, _) in zip(self.processes, self.pipes):
+            local.send(("term", None))
+            p.join()
 
         self.processes = []
 
