@@ -150,6 +150,8 @@ class ParallelEnvMultiproc(gym.Env):
     def shutdown(self):
         for p in self.processes:
             p.terminate()
+        for pipe in self.locals:
+            pipe.close()
         self.locals = []
         self.processes = []
 
