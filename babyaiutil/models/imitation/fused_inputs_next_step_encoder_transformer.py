@@ -49,7 +49,7 @@ class FusedInputsNextStepTransformerEncoderHarness(ImitationLearningHarness):
             nn.TransformerEncoderLayer(
                 d_model=3 * 32, nhead=4, dim_feedforward=4 * 3 * 32, dropout=0
             ),
-            num_layers=4,
+            num_layers=5,
         )
         self.ac_head = ActorCriticHead(32 * 3, 7)
 
