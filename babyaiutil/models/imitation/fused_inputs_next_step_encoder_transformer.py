@@ -47,7 +47,7 @@ class FusedInputsNextStepTransformerEncoderHarness(ImitationLearningHarness):
         self.action_token = nn.Parameter(torch.randn(3 * 32))
         self.transformer = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(
-                d_model=3 * 32, nhead=4, dim_feedforward=2 * 3 * 32
+                d_model=3 * 32, nhead=4, dim_feedforward=4 * 3 * 32, dropout=0
             ),
             num_layers=4,
         )
