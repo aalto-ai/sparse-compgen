@@ -124,62 +124,26 @@ class TransformerEncoderDecoderModel(nn.Module):
         )
         cat_image_components = sep_image_components.flatten(-2)
 
-        if False:
-            encoded_words = self.transformer.encoder(mission_words.permute(1, 0, 2))
-            out_seq, self_att_masks, mha_masks = do_decoder_forward_collect_masks(
-                self.transformer.decoder,
+        out_img = (
+            self.transformer(
+                mission_words.permute(1, 0, 2),
                 cat_image_components.permute(1, 2, 0, 3).reshape(
-                    -1, cat_image_components.shape[0], cat_image_components.shape[-1]
+                    -1,
+                    cat_image_components.shape[0],
+                    cat_image_components.shape[-1],
                 ),
-                encoded_words,
             )
-            out_img = out_seq.view(
+            .view(
                 cat_image_components.shape[1],
                 cat_image_components.shape[2],
                 cat_image_components.shape[0],
                 cat_image_components.shape[3],
-            ).permute(2, 0, 1, 3)
-            projected_out_img = self.projection(out_img)
-
-            decoder_att_weights = (
-                (
-                    torch.stack(self_att_masks, dim=0)
-                    .mean(dim=0)
-                    .mean(dim=-2)
-                    .reshape(images.shape[0], images.shape[1], images.shape[2])
-                )
-                + 10e-7
-            ).log()
-
-            return (
-                projected_out_img,
-                sep_image_components_t,
-                decoder_att_weights,
-                out_seq,
-                self_att_masks,
-                mha_masks,
             )
-        else:
-            out_img = (
-                self.transformer(
-                    mission_words.permute(1, 0, 2),
-                    cat_image_components.permute(1, 2, 0, 3).reshape(
-                        -1,
-                        cat_image_components.shape[0],
-                        cat_image_components.shape[-1],
-                    ),
-                )
-                .view(
-                    cat_image_components.shape[1],
-                    cat_image_components.shape[2],
-                    cat_image_components.shape[0],
-                    cat_image_components.shape[3],
-                )
-                .permute(2, 0, 1, 3)
-            )
-            projected_out_img = self.projection(out_img)
+            .permute(2, 0, 1, 3)
+        )
+        projected_out_img = self.projection(out_img)
 
-            return (projected_out_img, sep_image_components_t, None, None, None, None)
+        return (projected_out_img, sep_image_components_t, None, None, None, None)
 
 
 def linear_with_warmup_schedule(
