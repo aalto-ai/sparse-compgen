@@ -342,7 +342,7 @@ def collect_experience_from_policy(
                             ),
                         ],
                         dim=1,
-                    )[:, -(max_seq_len - 1) :]
+                    )[:, -(max(max_seq_len - 1, 1)) :]
 
                     recorded_rewards.append(step_rewards)
                     recorded_dones.append(step_dones)
