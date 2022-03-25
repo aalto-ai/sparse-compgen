@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 from torch.utils.data import Dataset, IterableDataset
-from ..preprocess import mission_groups_indices
+from ..envs.babyai.preprocess import mission_groups_indices
 from . import TuplesDataset
 
 

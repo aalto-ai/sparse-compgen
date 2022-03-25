@@ -1,6 +1,6 @@
 from torch.utils.data import Dataset
 
-from ..preprocess import mission_groups_indices
+from ..envs.babyai.preprocess import mission_groups_indices
 
 
 class TrajectoryDataset(Dataset):

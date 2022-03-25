@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, IterableDataset
 
-from ..wrap_env import correct_state_rotations
+from ..envs.babyai.wrap_env import correct_state_rotations
 
 import sys
 
