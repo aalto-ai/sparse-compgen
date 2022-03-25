@@ -135,23 +135,10 @@ class VINHarness(pl.LightningModule):
         )
         v_reg = F.mse_loss(value_maps, torch.zeros_like(value_maps))
 
-        if os.environ.get("DEBUG", "0") != "0":
-            import pdb
-
-            pdb.set_trace()
-
-        # l1_value_penalty = self.value.linear.weight.abs().mean()
-
         loss = q_mse + self.hparams.inv_weight * (q_reg + v_reg)
         self.log("path", q_mse, prog_bar=True)
         self.log("reg", q_reg, prog_bar=True)
         self.log("vreg", v_reg, prog_bar=True)
-        # self.log("l1", l1_value_penalty, prog_bar=True)
-
-        if os.environ.get("DEBUG", "0") == "1":
-            import pdb
-
-            pdb.set_trace()
 
         return loss
 
@@ -173,44 +160,6 @@ class VINHarness(pl.LightningModule):
         success = (rewards > 0).to(torch.float).mean()
 
         self.log("tsucc", success.item(), prog_bar=True)
-
-    """
-    def validation_step(self, x, step_index):
-        (
-            images_path,
-            directions,
-            actions,
-            returns,
-            masks,
-            lengths,
-            missions,
-            mission_masks,
-        ) = x
-
-        image_encodings, gather_maps, value_maps, reward_maps, qvalues = self(
-            (images_path, directions, missions)
-        )
-        estimated_q = qvalues[masks.bool()]
-        taken_actions = actions[masks.bool()]
-        observed_returns = returns[masks.bool()].float()
-
-        action_mask = torch.scatter(
-            torch.zeros_like(estimated_q).long(),
-            dim=-1,
-            index=taken_actions.unsqueeze(-1),
-            src=torch.ones_like(taken_actions.unsqueeze(-1)),
-        )
-        q_mse = F.mse_loss(estimated_q[action_mask.bool()], observed_returns.float())
-
-        # import pdb
-        # pdb.set_trace()
-        self.log("vpath", q_mse, prog_bar=True)
-
-        if os.environ.get("DEBUG", "0") == "1":
-            import pdb
-
-            pdb.set_trace()
-    """
 
     def configure_optimizers(self):
         import itertools
