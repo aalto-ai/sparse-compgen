@@ -20,7 +20,11 @@ from .transformer.sequence_embedding import (
 
 class FusedInputsAutoregressiveTransformerHarness(ImitationLearningHarness):
     def __init__(self, lr=10e-4, entropy_bonus=10e-3):
-        super().__init__(lr=lr, entropy_bonus=entropy_bonus, optimizer_config_func=transformer_optimizer_config)
+        super().__init__(
+            lr=lr,
+            entropy_bonus=entropy_bonus,
+            optimizer_config_func=transformer_optimizer_config,
+        )
         self.sequence_encoders = SequenceEncoderTuple(
             make_sentence_encoder(vocab_size=32, emb_dim=32 * 3),
             make_disentangled_image_encoder(vocab_size=32, n_components=3, emb_dim=32),
