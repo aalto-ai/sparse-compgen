@@ -1,4 +1,5 @@
 import os
+import itertools
 
 import torch
 import torch.nn.functional as F
@@ -162,8 +163,6 @@ class VINHarness(pl.LightningModule):
         self.log("tsucc", success.item(), prog_bar=True)
 
     def configure_optimizers(self):
-        import itertools
-
         return torch.optim.Adam(
             itertools.chain.from_iterable(
                 [self.mvprop.parameters(), self.value.parameters()]
