@@ -160,7 +160,9 @@ class ParallelEnvMultiproc(gym.Env):
         self.shutdown()
         for i in range(self.n_envs):
             existing_pipe = self.pipes[i] if len(self.pipes) > i else None
-            p, local, remote = create_proc_with_pipe(worker, existing_pipe, args=(self.env_name, i))
+            p, local, remote = create_proc_with_pipe(
+                worker, existing_pipe, args=(self.env_name, i)
+            )
 
             if existing_pipe is None:
                 self.pipes.append((local, remote))
