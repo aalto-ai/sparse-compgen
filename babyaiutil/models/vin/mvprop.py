@@ -105,11 +105,6 @@ class MVProp2D(nn.Module):
 
         gamma_eval = self.gamma()
 
-        if os.environ.get("DEBUG", "0") == "1":
-            import pdb
-
-            pdb.set_trace()
-
         for i in range(self.n_iterations):
             # B x H x W x H_u x W_u values
             # gamma = gamma_eval if i > 0 else 1
