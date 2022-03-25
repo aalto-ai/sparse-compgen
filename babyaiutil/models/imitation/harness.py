@@ -32,9 +32,7 @@ def compute_conservative_policy_loss(policy_logits, taken_actions, returns):
 
 def imitation_optimizer_config(model, lr):
     optimizer = torch.optim.Adam(self.parameters(), self.hparams.lr)
-    scheduler = torch.optim.lr_scheduler.StepLR(
-        optimizer, step_size=1000, gamma=0.9
-    )
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1000, gamma=0.9)
 
     return {"optimizer": optimizer, "scheduler": scheduler}
 
@@ -48,9 +46,7 @@ def imitation_training_step(harness, x, idx):
         (mission, images_path, directions_path, past_actions)
     )
 
-    loss = compute_imitation_loss(
-        policy_logits[bool_masks], taken_actions[bool_masks]
-    )
+    loss = compute_imitation_loss(policy_logits[bool_masks], taken_actions[bool_masks])
     entropy = (
         torch.special.entr(torch.softmax(policy_logits, dim=-1).clamp(10e-7, 1.0))
         .sum(dim=-1)
@@ -81,18 +77,21 @@ class ImitationLearningHarness(pl.LightningModule):
 
     Override the forward() method"""
 
-    def __init__(self,
-                 lr=10e-4,
-                 entropy_bonus=10e-3,
-                 optimizer_config_func=None,
-                 training_step_func=None,
-                 validation_step_func=None,
-                 ):
+    def __init__(
+        self,
+        lr=10e-4,
+        entropy_bonus=10e-3,
+        optimizer_config_func=None,
+        training_step_func=None,
+        validation_step_func=None,
+    ):
         super().__init__()
         self.save_hyperparameters("lr", "entropy_bonus")
         self.optimizer_config_func = optimizer_config_func or imitation_optimizer_config
         self.training_step_func = training_step_func or imitation_training_step
-        self.validation_step_func = validation_step_func or imitation_episodic_success_validation_step
+        self.validation_step_func = (
+            validation_step_func or imitation_episodic_success_validation_step
+        )
 
     def configure_optimizers(self):
         return self.optimizer_config_func(self, self.hparams.lr)
