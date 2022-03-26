@@ -31,7 +31,7 @@ def compute_conservative_policy_loss(policy_logits, taken_actions, returns):
 
 
 def imitation_optimizer_config(model, lr):
-    optimizer = torch.optim.Adam(self.parameters(), self.hparams.lr)
+    optimizer = torch.optim.Adam(model.parameters(), model.hparams.lr)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1000, gamma=0.9)
 
     return {"optimizer": optimizer, "scheduler": scheduler}
