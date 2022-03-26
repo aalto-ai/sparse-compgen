@@ -128,11 +128,6 @@ class ConvolutionMaskValueMapExtractor(nn.Module):
         masked_value_map_unfold = (mask * value_map_unfold).sum(dim=-2).sum(dim=-2)
         masked_reward_map_unfold = (mask * reward_map_unfold).sum(dim=-2).sum(dim=-2)
 
-        if os.getenv("DEBUG", "0") != "0":
-            import pdb
-
-            pdb.set_trace()
-
         return self.linear(
             torch.cat(
                 [masked_value_map_unfold, masked_reward_map_unfold, embedded_direction],
