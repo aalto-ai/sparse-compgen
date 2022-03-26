@@ -109,15 +109,6 @@ class ConvolutionMaskValueMapExtractor(nn.Module):
         embedded_direction = self.dir_emb(direction)
 
         in_vectors = image_vectors
-        # in_vectors = torch.cat(
-        #     [
-        #         embedded_direction[..., None, None, :].expand(
-        #             *image_vectors.shape[:-1], embedded_direction.shape[-1]
-        #         ),
-        #         image_vectors
-        #     ],
-        #     dim=-1,
-        # )
         in_channels = in_vectors.transpose(-1, -3).transpose(-2, -1)
 
         # B x C x H x W => B x H x W x C
