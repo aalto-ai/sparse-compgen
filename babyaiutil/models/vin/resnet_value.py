@@ -1,12 +1,9 @@
-import os
-
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from torchvision.models import resnet
 from ..img_mask import ConvAttention
-from .mvprop import SpatialMinMaxNormalization, unfold_neighbourhood
+from .mvprop import unfold_neighbourhood
 
 
 class MinMaxNorm(nn.Module):
