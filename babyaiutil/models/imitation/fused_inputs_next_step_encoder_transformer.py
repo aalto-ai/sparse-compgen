@@ -3,15 +3,12 @@ import torch.nn as nn
 
 from .harness import ImitationLearningHarness
 
-from ..common.add_aux import AddAuxLayer
 from .common.ac_head import ActorCriticHead
-from .transformer.causal_decoder_variant import TransformerSequenceDecoder
 from .transformer.optimizer_config import transformer_optimizer_config
 from .transformer.sequence_embedding import (
     SequenceEncoderTuple,
     make_sentence_encoder,
     make_disentangled_image_encoder,
-    make_output_sequence_encoder,
 )
 
 
