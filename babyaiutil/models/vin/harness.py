@@ -1,18 +1,13 @@
-import os
 import itertools
 
 import torch
-import torch.nn.functional as F
 import torchmetrics as tm
 import pytorch_lightning as pl
 
 from tqdm.auto import tqdm
 
 from .mvprop import MVProp2D
-from .resnet_value import (
-    BigConvolutionValueMapExtractor,
-    ConvolutionMaskValueMapExtractor,
-)
+from .resnet_value import BigConvolutionValueMapExtractor
 import sys
 
 
