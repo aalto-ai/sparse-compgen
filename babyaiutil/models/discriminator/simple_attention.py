@@ -6,7 +6,6 @@ import torch.nn.functional as F
 
 from scipy.stats import ortho_group
 
-from ..img_mask import ImageComponentsToMask
 from .harness import ImageDiscriminatorHarness
 
 
