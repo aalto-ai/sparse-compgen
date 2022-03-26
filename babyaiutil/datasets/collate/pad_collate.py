@@ -56,7 +56,7 @@ class PadCollate(object):
         batch_t = list(zip(*batch))
         # stack all
         return tuple([torch.stack(s) for s in batch_t]), tuple(
-            [torch.LongTensor(l) for l in lens_t]
+            [torch.LongTensor(length) for length in lens_t]
         )
 
     def __call__(self, batch):
