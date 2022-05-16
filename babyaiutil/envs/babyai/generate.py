@@ -1,4 +1,5 @@
 from collections import Counter
+from functools import partial
 import multiprocessing as mp
 
 import babyai
