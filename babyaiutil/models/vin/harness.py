@@ -22,6 +22,7 @@ class VINHarness(pl.LightningModule):
         inv_weight=10e-3,
         lr=1e-3,
         gamma=0.8,
+        **kwargs
     ):
         super().__init__()
         self.interaction_module = interaction_module
