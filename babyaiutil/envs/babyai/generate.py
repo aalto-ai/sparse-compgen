@@ -153,7 +153,7 @@ def replay_actions_for_data(env_name, word2idx, seed, actions):
 
 
 def generate_seeds_and_action_trajectories(
-    env_name, n_each, n_combinations, min_length
+    env_name, n_each, n_combinations, min_length, num_procs=8
 ):
     n_expected = n_each * n_combinations
     unique_environments_counter = Counter()
@@ -206,8 +206,8 @@ def replay_actions_for_data_star(args):
     return replay_actions_for_data(*args)
 
 
-def replay_actions_for_data_mp(env_name, word2idx, seeds_and_solutions):
-    with mp.Pool(processes=12) as pool:
+def replay_actions_for_data_mp(env_name, word2idx, seeds_and_solutions, num_procs=8):
+    with mp.Pool(processes=num_procs) as pool:
         yield from pool.imap_unordered(
             replay_actions_for_data_star,
             map(lambda x: (env_name, word2idx, *x), seeds_and_solutions),
