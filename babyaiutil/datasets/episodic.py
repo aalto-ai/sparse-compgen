@@ -1,7 +1,6 @@
 import itertools
 from multiprocessing import Process, Pipe
 
-import gc
 import gym
 
 import numpy as np
