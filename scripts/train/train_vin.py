@@ -29,6 +29,7 @@ from babyaiutil.datasets.episodic import (
     ParallelEnv,
     collect_experience_from_policy,
 )
+from babyaiutil.callbacks.schedule_hparam import ScheduleHparamCallback
 from babyaiutil.datasets.trajectory import make_trajectory_dataset_from_trajectories
 from babyaiutil.models.discriminator.independent_attention import (
     IndependentAttentionModel,
@@ -181,6 +182,55 @@ class MemoryStatsMonitor(pl.callbacks.base.Callback):
             self.last_snapshot = snapshot
 
 
+def wrap_with_l1_regularizer(model_cls, goal_detection_attrib):
+    class L1RegularizedModel(model_cls):
+        def __init__(self, *args, **kwargs):
+            super().__init__(l1_penalty=0, *args, **kwargs)
+
+        def training_step(self, x, idx):
+            loss = super().training_step(x, idx)
+            l1c = (
+                (
+                    F.normalize(
+                        getattr(self, goal_detection_attrib).attrib_embeddings.weight,
+                        dim=-1,
+                    )
+                    @ F.normalize(
+                        getattr(self, goal_detection_attrib).word_embeddings.weight,
+                        dim=-1,
+                    ).T
+                )
+                .abs()
+                .mean()
+            )
+
+            self.log("l1c", l1c, prog_bar=True)
+
+            return loss + self.hparams.l1_penalty * l1c
+
+    L1RegularizedModel.__name__ = f"L1RegularizedModel({model_cls.__name__})"
+    return L1RegularizedModel
+
+
+def wrap_with_interaction_module_optimizer(model_cls):
+    class WithInterationModuleOptimizer(model_cls):
+        def configure_optimizers(self):
+            return torch.optim.Adam(
+                itertools.chain.from_iterable(
+                    [
+                        self.mvprop.parameters(),
+                        self.value.parameters(),
+                        self.interaction_module.parameters(),
+                    ]
+                )
+            )
+
+    WithInterationModuleOptimizer.__name__ = (
+        f"WithIteractionModuleOptimizer({model_cls.__name__})"
+    )
+    return WithInterationModuleOptimizer
+
+
 def do_experiment(args):
     effective_limit = min(
         [args.limit or (args.total - args.vlimit), args.total - args.vlimit]
@@ -234,7 +284,27 @@ def do_experiment(args):
         )
         print("Loaded interaction model", args.load_interaction_model)
 
-    model = MODELS[args.model](interaction_module, offsets, 48, lr=1e-3, k=args.vin_k)
+        # We don't have to do anything special once we've loaded the interaction
+        # module, so we can just pass it directly to our model and the optimizers
+        # will be configured as we expect
+        model = MODELS[args.model](
+            interaction_module, offsets, 48, lr=1e-3, k=args.vin_k
+        )
+    else:
+        # Since we are not loading the interaction model, we are training it
+        # which means that it needs to be connected to the optimzier etc. If its
+        # the "independent" model, then we need to wrap it with the L1 regularizer,
+        # but in any event interaction model needs to be connected with the
+        # optimizer
+        model_cls = MODELS[args.model]
+
+        if args.interaction_model == "independent":
+            model_cls = wrap_with_l1_regularizer(model_cls, "interaction_module")
+
+        # Also add the configure_optimizers override
+        model_cls = wrap_with_interaction_module_optimizer(model_cls)
+
+        model = model_cls(interaction_module, offsets, 48, lr=1e-3, k=args.vin_k)
 
     train_dataloader = DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True
@@ -266,8 +336,15 @@ def do_experiment(args):
     )
 
     pl.seed_everything(args.seed)
+    callbacks = [pl.callbacks.LearningRateMonitor(), checkpoint_cb] + (
+        [
+            ScheduleHparamCallback("l1_penalty", 0, 10e-1, 1000, 5000),
+        ]
+        if args.interaction_model in ("independent", "simple")
+        else []
+    )
     trainer = pl.Trainer(
-        callbacks=[pl.callbacks.LearningRateMonitor(), checkpoint_cb],
+        callbacks=callbacks,
         max_steps=args.iterations,
         gpus=1 if args.device == "cuda" else 0,
         precision=16 if args.device == "cuda" else 32,
