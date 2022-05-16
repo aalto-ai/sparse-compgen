@@ -9,7 +9,9 @@ from tqdm.auto import tqdm
 from .wrap_env import correct_rotation
 
 
-def yield_seeds(env):
+def yield_seeds(env_name):
+    env = gym.make(env_name)
+
     seed = 0
     while True:
         env.seed(seed)
@@ -21,7 +23,10 @@ def yield_seeds(env):
 
 def env_from_seed(seed, env=None):
     if env is None:
-        env = gym.make("BabyAI-GoToLocal-v0")
+        env = "BabyAI-GoToLocal-v0"
+
+    if isinstance(env, str):
+        env = gym.make(env)
 
     np.random.seed(seed)
     env.seed(seed)
@@ -35,7 +40,7 @@ def filter_excess_environments(seeds, env, counter, n_each, expected_len):
         if sum(counter.values()) >= expected_len:
             break
 
-        env = env_from_seed(seed)
+        env = env_from_seed(seed, env)
 
         if counter[env.gen_obs()["mission"]] >= n_each:
             continue
@@ -161,8 +166,8 @@ def generate_seeds_and_action_trajectories(
                 filter_by_solution_length(
                     map_to_solution_mp(
                         filter_excess_environments(
-                            yield_seeds(env),
-                            env,
+                            yield_seeds(env_name),
+                            env_name,
                             unique_environments_counter,
                             n_each,
                             n_expected,
@@ -170,12 +175,12 @@ def generate_seeds_and_action_trajectories(
                     ),
                     min_length,
                 ),
-                env,
+                env_name,
                 unique_environments_counter,
                 n_each,
             )
         ):
-            env = env_from_seed(seed)
+            env = env_from_seed(seed, env_name)
             mission = env.gen_obs()["mission"]
 
             assert unique_environments_counter[mission] < n_each
