@@ -48,8 +48,8 @@ def filter_excess_environments(seeds, env, counter, n_each, expected_len):
         yield seed
 
 
-def solve_env(seed):
-    env = env_from_seed(seed)
+def solve_env(seed, env=None):
+    env = env_from_seed(seed, env)
 
     b = babyai.bot.Bot(env)
     done = False
@@ -62,16 +62,21 @@ def solve_env(seed):
     return seed, (reward > 0), actions
 
 
-def map_to_solution_mp(seeds):
-    with mp.Pool(processes=8) as pool:
-        for seed, solved, acts in pool.imap_unordered(solve_env, seeds, chunksize=100):
+def map_to_solution_mp(seeds, env_name, num_procs=8):
+    if num_procs < 2:
+        yield from map_to_solution(seeds, env_name)
+
+    with mp.Pool(processes=num_procs) as pool:
+        for seed, solved, acts in pool.imap_unordered(
+            partial(solve_env, env=env_name), seeds, chunksize=100
+        ):
             if solved:
                 yield (seed, acts)
 
 
-def map_to_solution(seeds):
+def map_to_solution(seeds, env):
     for seed in seeds:
-        seed, solved, acts = solve_env(seed)
+        seed, solved, acts = solve_env(seed, env)
 
         if solved:
             yield (seed, acts)
@@ -87,7 +92,7 @@ def filter_by_solution_length(seed_solution_stream, min_length):
 
 def filter_excess_solutions(seeds_and_solutions, env, counter, n_each):
     for seed, solution in seeds_and_solutions:
-        env = env_from_seed(seed)
+        env = env_from_seed(seed, env)
 
         if counter[env.gen_obs()["mission"]] >= n_each:
             continue
@@ -171,7 +176,9 @@ def generate_seeds_and_action_trajectories(
                             unique_environments_counter,
                             n_each,
                             n_expected,
-                        )
+                        ),
+                        env_name,
+                        num_procs=num_procs,
                     ),
                     min_length,
                 ),
