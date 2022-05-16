@@ -43,7 +43,7 @@ MODELS = {
     "conv_transformer": ConvTransformerImitationLearningHarness,
     "sentence_encoder_image_decoder": SentenceEncoderImageNSDecoderImageImitationLearningHarness,
     "fused_inputs_next_step_encoder": FusedInputsNextStepTransformerEncoderHarness,
-    "fused_inputs_autoregressive_transformer": FusedInputsAutoregressiveTransformerHarness
+    "fused_inputs_autoregressive_transformer": FusedInputsAutoregressiveTransformerHarness,
 }
 
 ACCUM_SEQ_LENGTHS = {
