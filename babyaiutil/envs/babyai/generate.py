@@ -51,7 +51,7 @@ def filter_excess_environments(seeds, env, counter, n_each, expected_len):
 def solve_env(seed, env=None):
     env = env_from_seed(seed, env)
 
-    b = babyai.bot.Bot(env)
+    b = babyai.bot.Bot(env, fully_observed=True)
     done = False
     actions = []
 
