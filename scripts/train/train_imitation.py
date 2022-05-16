@@ -86,7 +86,12 @@ def interactive_dataloader_from_seeds(
     dataloader_il = DataLoader(
         FuncIterableDataset(
             collect_experience_from_policy(
-                parallel_env, model, word2idx, seeds, max_seq_len=max_seq_len, device=device
+                parallel_env,
+                model,
+                word2idx,
+                seeds,
+                max_seq_len=max_seq_len,
+                device=device,
             ),
             len(seeds),
         ),
@@ -152,10 +157,22 @@ def do_experiment(args):
         train_dataset, batch_size=args.batch_size, shuffle=True
     )
     val_id_dataloader_il = interactive_dataloader_from_seeds(
-        parallel_env, model, word2idx, valid_dataset_id, 64, max_seq_len=max_seq_len, device=validation_device
+        parallel_env,
+        model,
+        word2idx,
+        valid_dataset_id,
+        64,
+        max_seq_len=max_seq_len,
+        device=validation_device,
     )
     val_ood_dataloader_il = interactive_dataloader_from_seeds(
-        parallel_env, model, word2idx, valid_dataset_ood, 64, max_seq_len=max_seq_len, device=validation_device
+        parallel_env,
+        model,
+        word2idx,
+        valid_dataset_ood,
+        64,
+        max_seq_len=max_seq_len,
+        device=validation_device,
     )
 
     check_val_opts = {}
