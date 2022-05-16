@@ -46,9 +46,7 @@ MODELS = {
     "fused_inputs_autoregressive_transformer": FusedInputsAutoregressiveTransformerHarness,
 }
 
-ACCUM_SEQ_LENGTHS = {
-    "fused_inputs_autoregressive_transformer": 16
-}
+ACCUM_SEQ_LENGTHS = {"fused_inputs_autoregressive_transformer": 16}
 
 
 def parser():
