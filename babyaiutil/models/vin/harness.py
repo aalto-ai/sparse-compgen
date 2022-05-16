@@ -58,7 +58,7 @@ class VINHarness(pl.LightningModule):
         return cat_image_components, gather_maps, value_maps, reward_maps
 
     def forward(self, x):
-        missions, images, directions = x
+        missions, images, directions, past_actions = x
 
         # Something is a goal state if the product of marginals
         # is nonzero
@@ -108,6 +108,7 @@ class VINHarness(pl.LightningModule):
             masks,
         ) = x
 
+        past_actions = (actions * (actions != -1))[:, :-1]
         (
             policy_logits,
             qvalues,
@@ -115,7 +116,7 @@ class VINHarness(pl.LightningModule):
             gather_maps,
             value_maps,
             reward_maps,
-        ) = self((missions, images_path, directions))
+        ) = self((missions, images_path, directions, past_actions))
         estimated_q = qvalues[masks.bool()]
         taken_actions = actions[masks.bool()]
         observed_returns = returns[masks.bool()].float()
