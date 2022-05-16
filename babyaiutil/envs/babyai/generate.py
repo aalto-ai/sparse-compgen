@@ -154,8 +154,6 @@ def replay_actions_for_data(env_name, word2idx, seed, actions):
 def generate_seeds_and_action_trajectories(
     env_name, n_each, n_combinations, min_length
 ):
-    env = gym.make(env_name)
-
     n_expected = n_each * n_combinations
     unique_environments_counter = Counter()
 
