@@ -83,6 +83,7 @@ def parser():
     parser.add_argument(
         "--vin-k", default=10, type=int, help="Number of VIN iterations"
     )
+    parser.add_argument("--device", default="cuda", help="Which device to use")
     return parser
 
 
@@ -268,8 +269,8 @@ def do_experiment(args):
     trainer = pl.Trainer(
         callbacks=[pl.callbacks.LearningRateMonitor(), checkpoint_cb],
         max_steps=args.iterations,
-        gpus=1,
-        precision=16,
+        gpus=1 if args.device == "cuda" else 0,
+        precision=16 if args.device == "cuda" else 32,
         default_root_dir=f"logs/{model_dir}/{exp_name}",
         accumulate_grad_batches=1,
         enable_progress_bar=sys.stdout.isatty(),
