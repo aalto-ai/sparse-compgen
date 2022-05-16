@@ -1,9 +1,7 @@
 import torch.nn as nn
 
 from .init import (
-    initialize_parameters,
     fixup_embedding_init,
-    fixup_transformer_layer_init,
     fixup_transformer,
 )
 from .layers import TransformerEncoderLayerNoNorm, TransformerDecoderLayerNoNorm
