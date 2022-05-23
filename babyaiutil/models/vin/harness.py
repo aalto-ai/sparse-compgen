@@ -35,9 +35,14 @@ class VINHarness(pl.LightningModule):
     def value_map_from_image(self, x):
         images, directions, missions = x
 
-        scores, image_components = self.interaction_module(images[..., :2], missions)[
-            :2
-        ]
+        images_flat = images.flatten(0, -4)
+        missions_flat = missions.flatten(0, -2)
+        missions_flat = missions_flat.repeat_interleave(dim=0, repeats=images.shape[-4])
+        scores, image_components = self.interaction_module(
+            images_flat[..., :2], missions_flat
+        )[:2]
+        image_components = image_components.unflatten(0, images.shape[:-3])
+        scores = scores.unflatten(0, images.shape[:-3])
         binary_scores = scores.sigmoid()
 
         # image_components is B x L x C x H x W x E
