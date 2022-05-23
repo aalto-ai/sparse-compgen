@@ -34,12 +34,21 @@ from babyaiutil.datasets.trajectory import make_trajectory_dataset_from_trajecto
 from babyaiutil.models.discriminator.independent_attention import (
     IndependentAttentionModel,
 )
+from babyaiutil.models.discriminator.independent_attention import (
+    IndependentAttentionModel,
+)
+from babyaiutil.models.discriminator.transformer import TransformerEncoderDecoderModel
 from babyaiutil.models.vin.harness import VINHarness
 
 import tracemalloc
 
 
-INTERACTION_MODEL = {"independent": IndependentAttentionModel}
+INTERACTION_MODEL = {
+    "independent": IndependentAttentionModel,
+    "transformer": TransformerEncoderDecoderModel,
+}
+
+INTERACTION_MODEL_STRIP = {"independent": "model.", "transformer": "encoder."}
 
 MODELS = {"mvprop": VINHarness}
 
@@ -71,7 +80,7 @@ def parser():
     )
     parser.add_argument(
         "--interaction-model",
-        choices=["independent"],
+        choices=list(INTERACTION_MODEL.keys()),
         default="independent",
         help="Which interaction module to use",
     )
@@ -279,7 +288,8 @@ def do_experiment(args):
     if args.load_interaction_model:
         interaction_module.load_state_dict(
             filter_state_dict(
-                torch.load(args.load_interaction_model)["state_dict"], "model."
+                torch.load(args.load_interaction_model)["state_dict"],
+                INTERACTION_MODEL_STRIP[args.interaction_model],
             )
         )
         print("Loaded interaction model", args.load_interaction_model)
