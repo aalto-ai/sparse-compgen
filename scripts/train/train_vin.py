@@ -94,6 +94,9 @@ def parser():
         "--vin-k", default=10, type=int, help="Number of VIN iterations"
     )
     parser.add_argument("--device", default="cuda", help="Which device to use")
+    parser.add_argument(
+        "--show-progress", action="store_true", help="Show the progress bar"
+    )
     return parser
 
 
@@ -360,7 +363,7 @@ def do_experiment(args):
         precision=16 if args.device == "cuda" else 32,
         default_root_dir=f"logs/{model_dir}/{exp_name}",
         accumulate_grad_batches=1,
-        enable_progress_bar=sys.stdout.isatty(),
+        enable_progress_bar=sys.stdout.isatty() or args.show_progress,
         **check_val_opts,
     )
     trainer.fit(model, train_dataloader, [val_id_dataloader_il, val_ood_dataloader_il])
