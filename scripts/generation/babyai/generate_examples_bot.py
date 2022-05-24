@@ -1,26 +1,14 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import argparse
-from collections import Counter
-import itertools
 import pickle
 
-import babyai
-import gym
-import gym_minigrid.minigrid as mg
-import numpy as np
 from tqdm.auto import tqdm
 
 from babyaiutil.envs.babyai.generate import (
     generate_seeds_and_action_trajectories,
     replay_actions_for_data_mp,
 )
-from babyaiutil.envs.babyai.wrap_env import wrap_state, EnvWrapper
 import pickle
 import os
-
-import multiprocessing as mp
 
 
 def main():
