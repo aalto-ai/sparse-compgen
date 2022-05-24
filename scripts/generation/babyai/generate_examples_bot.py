@@ -36,18 +36,19 @@ def main():
         args.seeds_and_solutions_buffer or f"seeds_and_solutions_{args.env}.pb"
     )
 
-    (
-        seeds_and_solutions,
-        unique_environments_counter,
-    ) = generate_seeds_and_action_trajectories(
-        args.env,
-        args.n_trajectories_per_goal,
-        6 * 3 * 2,
-        args.min_trajectory_length,
-    )
+    if not os.path.exists(seeds_and_solutions_buffer):
+        (
+            seeds_and_solutions,
+            unique_environments_counter,
+        ) = generate_seeds_and_action_trajectories(
+            args.env,
+            args.n_trajectories_per_goal,
+            6 * 3 * 2,
+            args.min_trajectory_length,
+        )
 
-    with open(args.seeds_and_solutions_buffer, "wb") as f:
-        pickle.dump(seeds_and_solutions, f)
+        with open(args.seeds_and_solutions_buffer, "wb") as f:
+            pickle.dump(seeds_and_solutions, f)
 
     with open(args.seeds_and_solutions_buffer, "rb") as f:
         seeds_and_solutions = pickle.load(f)
