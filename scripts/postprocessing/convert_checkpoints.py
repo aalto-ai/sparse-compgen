@@ -17,7 +17,9 @@ def main():
 
             print(f"Opening {fullpath}")
             try:
-                model = torch.load(fullpath, map_location=torch.device("cpu"))["state_dict"]
+                model = torch.load(fullpath, map_location=torch.device("cpu"))[
+                    "state_dict"
+                ]
             except KeyError:
                 print(f"Ignoring {fullpath} since it is not a pl-checkpoint")
 
@@ -26,9 +28,6 @@ def main():
                 torch.save(model, fullpath)
 
     print("Done")
-
-
-
 
 
 if __name__ == "__main__":
