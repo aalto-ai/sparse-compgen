@@ -1,6 +1,5 @@
 import argparse
 import json
-import pickle
 
 import numpy as np
 import torch
@@ -8,6 +7,7 @@ from tqdm.auto import tqdm
 
 from gym_minigrid.minigrid import OBJECT_TO_IDX, COLOR_TO_IDX
 
+from babyaiutil.envs.babyai.data import read_data
 from babyaiutil.envs.babyai.render import render_integer_encoded_grid
 from babyaiutil.models.discriminator.film import FiLMConvEncoder
 from babyaiutil.models.discriminator.transformer import TransformerEncoderDecoderModel
@@ -104,8 +104,7 @@ def main():
     parser.add_argument("--valid-index", type=int, default=6)
     args = parser.parse_args()
 
-    with open(args.dataset, "rb") as f:
-        (train_trajectories, valid_trajectories, words, word2idx) = pickle.load(f)
+    (train_trajectories, valid_trajectories, words, word2idx) = read_data
 
     scores = {
         m: get_checkpoint_scores_tuples_for_models(
