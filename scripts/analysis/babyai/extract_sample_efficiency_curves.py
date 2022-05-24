@@ -15,6 +15,8 @@ from rliable import library as rly
 from rliable import metrics as rl_metrics
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
+from common import generate_experiment_name, get_most_recent_version, to_lists
+
 
 DEFAULT_EVENTS = ["dataloader_idx_0/vsucc", "dataloader_idx_1/vsucc"]
 DEFAULT_LIMITS = [50, 100, 250, 500, 1000, 2500, 5000, 9980]
@@ -27,11 +29,6 @@ DEFAULT_EXPERIMENTS = [
     "imitation:fused_inputs_next_step_encoder:250000:70000",
     "imitation:film_lstm_policy:70000:70000",
 ]
-
-
-def get_most_recent_version(experiment_dir):
-    versions = os.listdir(os.path.join(experiment_dir, "lightning_logs"))
-    return sorted(versions, key=lambda x: int(x.split("_")[1]))[-1]
 
 
 def get_tb_logs(logs_dir, task_name, model_name, experiment_name, version=None):
@@ -59,10 +56,6 @@ def tb_events_scalars_to_pd_dataframe(event_acc, events):
     )
 
     return pd.DataFrame.from_records(records)
-
-
-def generate_experiment_name(exp, model, seed, iterations, batch_size, limit):
-    return f"{exp}_s_{seed}_m_{model}_it_{iterations}_b_{batch_size}_l_{limit}"
 
 
 def long_to_wide(df):
@@ -408,19 +401,6 @@ def generate_sample_efficiency_matrix_mp(
 
 def process_experiment_names_from_args(experiment_names):
     return [name.split(":", maxsplit=3) for name in experiment_names]
-
-
-def to_lists(sequence):
-    if isinstance(sequence, np.ndarray):
-        return sequence.tolist()
-
-    if isinstance(sequence, collections.abc.Mapping):
-        return {k: to_lists(v) for k, v in sequence.items()}
-
-    if isinstance(sequence, collections.abc.Sequence):
-        return [to_lists(v) for v in sequence]
-
-    return sequence
 
 
 def main():
