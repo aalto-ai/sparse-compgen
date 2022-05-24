@@ -3,7 +3,6 @@ import itertools
 import math
 import os
 import operator
-import pickle
 import sys
 
 import babyai
@@ -17,6 +16,7 @@ import torch.nn.functional as F
 from torch.utils.data import ConcatDataset, Dataset, DataLoader
 import pytorch_lightning as pl
 
+from babyaiutil.envs.babyai.data import read_data
 from babyaiutil.datasets.episodic import (
     FuncIterableDataset,
     ParallelEnv,
@@ -132,11 +132,8 @@ def do_experiment(args):
     # into memory.
     parallel_env = ParallelEnv("BabyAI-GoToLocal-v0", args.n_eval_procs)
 
-    with open(args.data, "rb") as f:
-        print("Opened", f.name)
-        (train_trajectories, valid_trajectories, words, word2idx) = np.load(
-            f, allow_pickle=True
-        )
+    print("Opened", args.data)
+    (train_trajectories, valid_trajectories, words, word2idx) = read_data(args.data)
 
     train_dataset = make_trajectory_dataset_from_trajectories(
         train_trajectories, limit=effective_limit

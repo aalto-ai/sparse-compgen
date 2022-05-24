@@ -24,6 +24,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 
 from gym_minigrid.minigrid import OBJECT_TO_IDX, COLOR_TO_IDX
 
+from babyaiutil.envs.babyai.data import read_data
 from babyaiutil.datasets.episodic import (
     FuncIterableDataset,
     ParallelEnv,
@@ -152,9 +153,8 @@ def load_data_directory(path):
 
 
 def load_data_archive(path):
-    with open(path, "rb") as f:
-        print("Opened", f.name)
-        return np.load(f, allow_pickle=True)
+    print("Opened", args.data)
+    (train_trajectories, valid_trajectories, words, word2idx) = read_data(args.data)
 
 
 def load_data(path):

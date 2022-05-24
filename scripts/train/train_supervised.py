@@ -8,6 +8,7 @@ import pytorch_lightning as pl
 
 from gym_minigrid.minigrid import OBJECT_TO_IDX, COLOR_TO_IDX
 
+from babyaiutil.envs.babyai.data import read_data
 from babyaiutil.datasets.supervised import (
     make_supervised_goals_dataset_from_trajectories,
 )
@@ -72,8 +73,8 @@ def do_experiment(args):
         print(f"Skipping {model_path} as it already exists")
         return
 
-    with open(args.data, "rb") as f:
-        (train_trajectories, valid_trajectories, words, word2idx) = pickle.load(f)
+    print("Opened", args.data)
+    (train_trajectories, valid_trajectories, words, word2idx) = read_data(args.data)
 
     train_dataset = make_supervised_goals_dataset_from_trajectories(
         train_trajectories, limit=effective_limit

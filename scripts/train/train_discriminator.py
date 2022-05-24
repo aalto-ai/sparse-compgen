@@ -1,7 +1,6 @@
 import argparse
 import math
 import os
-import pickle
 import sys
 
 from torch.utils.data import DataLoader
@@ -10,6 +9,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 
 from gym_minigrid.minigrid import OBJECT_TO_IDX, COLOR_TO_IDX
 
+from babyaiutil.envs.babyai.data import read_data
 from babyaiutil.datasets.discriminator import (
     make_discriminator_dataset_from_trajectories,
     make_initial_observation_discriminator_dataset_from_trajectories,
@@ -79,8 +79,7 @@ def do_experiment(args):
         print(f"Skipping {model_path} as it already exists")
         return
 
-    with open(args.data, "rb") as f:
-        (train_trajectories, valid_trajectories, words, word2idx) = pickle.load(f)
+    (train_trajectories, valid_trajectories, words, word2idx) = read_data(args.data)
 
     train_dataset = make_discriminator_dataset_from_trajectories(
         train_trajectories, limit=effective_limit
