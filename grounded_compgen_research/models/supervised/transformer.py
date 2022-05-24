@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn as nn
 
-from ..discriminator.transformer import TransformerEncoderDecoderModel
+from ..interaction.transformer import TransformerEncoderDecoderModel
 from .harness import ImageSupervisedHarness
 
 

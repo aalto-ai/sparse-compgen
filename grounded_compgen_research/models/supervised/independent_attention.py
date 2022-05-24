@@ -3,7 +3,7 @@ import os
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..discriminator.independent_attention import Affine, IndependentAttentionModel
+from ..interaction.independent_attention import Affine, IndependentAttentionModel
 from .harness import ImageSupervisedHarness
 
 

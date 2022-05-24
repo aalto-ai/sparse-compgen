@@ -1,7 +1,7 @@
 import os
 import torch.nn as nn
 
-from ..discriminator.film import FiLMConvEncoder
+from ..interaction.film import FiLMConvEncoder
 from .harness import ImageSupervisedHarness
 
 

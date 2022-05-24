@@ -9,12 +9,12 @@ from gym_minigrid.minigrid import OBJECT_TO_IDX, COLOR_TO_IDX
 
 from grounded_compgen_research.envs.babyai.data import read_data
 from grounded_compgen_research.envs.babyai.render import render_integer_encoded_grid
-from grounded_compgen_research.models.discriminator.film import FiLMConvEncoder
-from grounded_compgen_research.models.discriminator.transformer import TransformerEncoderDecoderModel
-from grounded_compgen_research.models.discriminator.independent_attention import (
+from grounded_compgen_research.models.interaction.film import FiLMConvEncoder
+from grounded_compgen_research.models.interaction.transformer import TransformerEncoderDecoderModel
+from grounded_compgen_research.models.interaction.independent_attention import (
     IndependentAttentionModel,
 )
-from grounded_compgen_research.models.discriminator.simple_attention import SimpleAttentionModel
+from grounded_compgen_research.models.interaction.simple_attention import SimpleAttentionModel
 
 from common import (
     trim_rows_indices_pcts,

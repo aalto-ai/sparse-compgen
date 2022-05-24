@@ -25,13 +25,13 @@ from grounded_compgen_research.datasets.episodic import (
 )
 from grounded_compgen_research.callbacks.schedule_hparam import ScheduleHparamCallback
 from grounded_compgen_research.datasets.trajectory import make_trajectory_dataset_from_trajectories
-from grounded_compgen_research.models.discriminator.independent_attention import (
+from grounded_compgen_research.models.interaction.independent_attention import (
     IndependentAttentionModel,
 )
-from grounded_compgen_research.models.discriminator.independent_attention import (
+from grounded_compgen_research.models.interaction.independent_attention import (
     IndependentAttentionModel,
 )
-from grounded_compgen_research.models.discriminator.transformer import TransformerEncoderDecoderModel
+from grounded_compgen_research.models.interaction.transformer import TransformerEncoderDecoderModel
 from grounded_compgen_research.models.vin.harness import VINHarness
 
 import tracemalloc
