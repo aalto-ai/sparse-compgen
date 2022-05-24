@@ -21,13 +21,17 @@ from common import generate_experiment_name, get_most_recent_version, to_lists
 DEFAULT_EVENTS = ["dataloader_idx_0/vsucc", "dataloader_idx_1/vsucc"]
 DEFAULT_LIMITS = [50, 100, 250, 500, 1000, 2500, 5000, 9980]
 DEFAULT_EXPERIMENTS = [
-    "vin_sample_nogoal_16_logsumexp_end_to_end_sparse:mvprop:270000:270000",
     "vin_sample_nogoal_16_logsumexp_ignorance:mvprop:70000:70000",
-    "vin_sample_nogoal_16_logsumexp_ignorance_transformer:mvprop:70000:70000",
     "vin_sample_nogoal_16_logsumexp_k_0:mvprop:70000:70000",
     "imitation:pure_transformer:120000:70000",
-    "imitation:fused_inputs_next_step_encoder:250000:70000",
     "imitation:film_lstm_policy:70000:70000",
+]
+
+# Experiments that didn't make it in the paper
+OPTIONAL_EXPERIMENTS = [
+    "vin_sample_nogoal_16_logsumexp_end_to_end_sparse:mvprop:270000:270000",
+    "vin_sample_nogoal_16_logsumexp_ignorance_transformer:mvprop:70000:70000",
+    "imitation:fused_inputs_next_step_encoder:250000:70000",
 ]
 
 
