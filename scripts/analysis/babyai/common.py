@@ -148,6 +148,9 @@ def flatten_tree(tree):
 
 
 def to_lists(sequence):
+    if isinstance(sequence, str):
+        return sequence
+
     if isinstance(sequence, np.ndarray):
         return sequence.tolist()
 
