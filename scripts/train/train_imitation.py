@@ -2,18 +2,10 @@ import argparse
 import itertools
 import math
 import os
-import operator
 import sys
 
-import babyai
-
-import numpy as np
-import pandas as pd
-from torch.distributions import Categorical
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.utils.data import ConcatDataset, Dataset, DataLoader
+from torch.utils.data import  DataLoader
 import pytorch_lightning as pl
 
 from babyaiutil.envs.babyai.data import read_data
