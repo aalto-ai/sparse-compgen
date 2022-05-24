@@ -30,18 +30,15 @@ def main():
                         print(f"Would drop key {key} from {prefix}")
 
             model = {
-                k: v for k, v in model.items() if not any([
-                    k.startswith(prefix) for prefix in args.drop_prefixes
-                ])
+                k: v
+                for k, v in model.items()
+                if not any([k.startswith(prefix) for prefix in args.drop_prefixes])
             }
             print(f"Keys remaining {model.keys()}")
             if not args.dry_run:
                 torch.save(model, fullpath)
 
     print("Done")
-
-
-
 
 
 if __name__ == "__main__":
