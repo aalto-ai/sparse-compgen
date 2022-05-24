@@ -7,7 +7,7 @@ import os
 
 import numpy as np
 
-from babyaiutil.envs.babyai.preprocess import pad_dataset, rewards_to_returns
+from grounded_compgen_research.envs.babyai.preprocess import pad_dataset, rewards_to_returns
 
 
 def mask_dict_of_arrays(dict_of_arrays, mask):

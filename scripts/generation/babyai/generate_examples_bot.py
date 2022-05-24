@@ -3,7 +3,7 @@ import pickle
 
 from tqdm.auto import tqdm
 
-from babyaiutil.envs.babyai.generate import (
+from grounded_compgen_research.envs.babyai.generate import (
     generate_seeds_and_action_trajectories,
     replay_actions_for_data_mp,
 )

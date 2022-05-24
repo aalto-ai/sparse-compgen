@@ -7,18 +7,18 @@ import pytorch_lightning as pl
 
 from gym_minigrid.minigrid import OBJECT_TO_IDX, COLOR_TO_IDX
 
-from babyaiutil.envs.babyai.data import read_data
-from babyaiutil.datasets.supervised import (
+from grounded_compgen_research.envs.babyai.data import read_data
+from grounded_compgen_research.datasets.supervised import (
     make_supervised_goals_dataset_from_trajectories,
 )
-from babyaiutil.models.supervised.film import FiLMConvEncoderProjectionHarness
-from babyaiutil.models.supervised.transformer import (
+from grounded_compgen_research.models.supervised.film import FiLMConvEncoderProjectionHarness
+from grounded_compgen_research.models.supervised.transformer import (
     TransformerEncoderDecoderProjectionHarness,
 )
-from babyaiutil.models.supervised.independent_attention import (
+from grounded_compgen_research.models.supervised.independent_attention import (
     IndependentAttentionProjectionHarness,
 )
-from babyaiutil.callbacks.schedule_hparam import ScheduleHparamCallback
+from grounded_compgen_research.callbacks.schedule_hparam import ScheduleHparamCallback
 
 
 MODELS = {

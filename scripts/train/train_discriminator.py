@@ -8,20 +8,20 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 
 from gym_minigrid.minigrid import OBJECT_TO_IDX, COLOR_TO_IDX
 
-from babyaiutil.envs.babyai.data import read_data
-from babyaiutil.datasets.discriminator import (
+from grounded_compgen_research.envs.babyai.data import read_data
+from grounded_compgen_research.datasets.discriminator import (
     make_discriminator_dataset_from_trajectories,
     make_initial_observation_discriminator_dataset_from_trajectories,
 )
-from babyaiutil.models.discriminator.film import FiLMDiscriminatorHarness
-from babyaiutil.models.discriminator.simple_attention import (
+from grounded_compgen_research.models.discriminator.film import FiLMDiscriminatorHarness
+from grounded_compgen_research.models.discriminator.simple_attention import (
     SimpleAttentionDiscriminatorHarness,
 )
-from babyaiutil.models.discriminator.transformer import TransformerDiscriminatorHarness
-from babyaiutil.models.discriminator.independent_attention import (
+from grounded_compgen_research.models.discriminator.transformer import TransformerDiscriminatorHarness
+from grounded_compgen_research.models.discriminator.independent_attention import (
     IndependentAttentionDiscriminatorHarness,
 )
-from babyaiutil.callbacks.schedule_hparam import ScheduleHparamCallback
+from grounded_compgen_research.callbacks.schedule_hparam import ScheduleHparamCallback
 
 
 MODELS = {

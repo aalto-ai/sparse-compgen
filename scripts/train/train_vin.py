@@ -17,22 +17,22 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 
 from gym_minigrid.minigrid import OBJECT_TO_IDX, COLOR_TO_IDX
 
-from babyaiutil.envs.babyai.data import read_data
-from babyaiutil.datasets.episodic import (
+from grounded_compgen_research.envs.babyai.data import read_data
+from grounded_compgen_research.datasets.episodic import (
     FuncIterableDataset,
     ParallelEnv,
     collect_experience_from_policy,
 )
-from babyaiutil.callbacks.schedule_hparam import ScheduleHparamCallback
-from babyaiutil.datasets.trajectory import make_trajectory_dataset_from_trajectories
-from babyaiutil.models.discriminator.independent_attention import (
+from grounded_compgen_research.callbacks.schedule_hparam import ScheduleHparamCallback
+from grounded_compgen_research.datasets.trajectory import make_trajectory_dataset_from_trajectories
+from grounded_compgen_research.models.discriminator.independent_attention import (
     IndependentAttentionModel,
 )
-from babyaiutil.models.discriminator.independent_attention import (
+from grounded_compgen_research.models.discriminator.independent_attention import (
     IndependentAttentionModel,
 )
-from babyaiutil.models.discriminator.transformer import TransformerEncoderDecoderModel
-from babyaiutil.models.vin.harness import VINHarness
+from grounded_compgen_research.models.discriminator.transformer import TransformerEncoderDecoderModel
+from grounded_compgen_research.models.vin.harness import VINHarness
 
 import tracemalloc
 

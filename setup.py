@@ -32,15 +32,15 @@ with open("requirements.txt", "r") as f:
     install_requires = [req for req in map(str.strip, install_requires) if req]
 
 setuptools.setup(
-    name="BabyAI utils",
+    name="Grounded Compositional Generalization Research",
     author="Sam Spilsbury",
     author_email="sam.spilsbury@aalto.fi",
     version="0.0.0",
     python_requires=">=3.8",
     packages=setuptools.find_packages(),
     install_requires=install_requires,
-    url="https://github.com/smspillaz/babyaiutil",
-    description="Utilities for working with BabyAI environment",
+    url="https://github.com/smspillaz/grounded_compgen_research",
+    description="Utilities for working with Grounded Compositional Generalization environments",
     long_description=long_description,
     long_description_content_type="text/markdown",
     classifiers=[

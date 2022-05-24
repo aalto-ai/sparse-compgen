@@ -8,24 +8,24 @@ import torch
 from torch.utils.data import  DataLoader
 import pytorch_lightning as pl
 
-from babyaiutil.envs.babyai.data import read_data
-from babyaiutil.datasets.episodic import (
+from grounded_compgen_research.envs.babyai.data import read_data
+from grounded_compgen_research.datasets.episodic import (
     FuncIterableDataset,
     ParallelEnv,
     collect_experience_from_policy,
 )
-from babyaiutil.datasets.trajectory import make_trajectory_dataset_from_trajectories
-from babyaiutil.models.imitation.baseline import ACModelImitationLearningHarness
-from babyaiutil.models.imitation.conv_transformer import (
+from grounded_compgen_research.datasets.trajectory import make_trajectory_dataset_from_trajectories
+from grounded_compgen_research.models.imitation.baseline import ACModelImitationLearningHarness
+from grounded_compgen_research.models.imitation.conv_transformer import (
     ConvTransformerImitationLearningHarness,
 )
-from babyaiutil.models.imitation.sentence_encoder_image_decoder_transformer import (
+from grounded_compgen_research.models.imitation.sentence_encoder_image_decoder_transformer import (
     SentenceEncoderImageNSDecoderImageImitationLearningHarness,
 )
-from babyaiutil.models.imitation.fused_inputs_next_step_encoder_transformer import (
+from grounded_compgen_research.models.imitation.fused_inputs_next_step_encoder_transformer import (
     FusedInputsNextStepTransformerEncoderHarness,
 )
-from babyaiutil.models.imitation.fused_inputs_autoregressive_transformer import (
+from grounded_compgen_research.models.imitation.fused_inputs_autoregressive_transformer import (
     FusedInputsAutoregressiveTransformerHarness,
 )
 

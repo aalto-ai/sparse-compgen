@@ -1,5 +1,5 @@
 import argparse
-from babyaiutil.envs.babyai.data import read_pickle, write_hdf5
+from grounded_compgen_research.envs.babyai.data import read_pickle, write_hdf5
 
 
 def main():
