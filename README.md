@@ -10,6 +10,25 @@ This work demonstrates a model that promotes sparse interactions between
 words and disentangled factors and lead to better compositional generalization
 performance at a low number of samples on a simple goal-reaching task.
 
+## Citation
+
+If you wish to refer to this work, please cite it as follows:
+
+```
+@inproceedings{spilsbury-ilin-2022-compositional,
+    title = "Compositional Generalization in Grounded Language Learning via Induced Model Sparsity",
+    author = "Spilsbury, Sam  and
+      Ilin, Alexander",
+    booktitle = "Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies: Student Research Workshop",
+    month = jul,
+    year = "2022",
+    address = "Hybrid: Seattle, Washington + Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2022.naacl-srw.19",
+    pages = "143--155",
+}
+```
+
 ## Generating the Dataset
 
 The dataset we use for the paper in HDF5 can be found [here](https://aalto-naacl-2022-sparse-compgen.s3.us-west-1.amazonaws.com/archives/data.tar.xz).
