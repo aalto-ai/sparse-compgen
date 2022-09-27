@@ -29,6 +29,11 @@ If you wish to refer to this work, please cite it as follows:
 }
 ```
 
+## Setting up and dependencies
+
+The main dependencies can be found in the r`equirements.txt` file and can be installed with `pip`. You will
+also need to install babyai from [this commit](https://github.com/smspillaz/babyai/commit/16c86e872146d20bbdb7c1dca1a81fd4d049cca3).
+
 ## Generating the Dataset
 
 The dataset we use for the paper in HDF5 can be found [here](https://aalto-naacl-2022-sparse-compgen.s3.us-west-1.amazonaws.com/archives/data.tar.xz).
